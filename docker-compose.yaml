@@ -2,9 +2,9 @@ version: '3'
 services:
   frontend:
     build:
-      context: .
+      context: ./
       dockerfile: front/Dockerfile
   backend:
     build:
-      context: .
-      dockerfile: app/DockerFile
+      context: ./
+      dockerfile: app/Dockerfile

@@ -12,10 +12,10 @@ RUN chown -R appuser:appuser /front
 ### Second stage ###
 
 FROM base as builder
-COPY public /front/public
-COPY src /front/src
-COPY package.json postcss.config.js tailwind.config.js tsconfig.json tsconfig.node.json \
-    vite.config.ts \
+COPY front/public /front/public
+COPY front/src /front/src
+COPY front/package.json front/postcss.config.js front/tailwind.config.js front/tsconfig.json \
+    front/tsconfig.node.json front/vite.config.ts \
     /front/
 
 # this needs to be moved
