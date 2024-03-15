@@ -19,11 +19,9 @@ COPY package.json postcss.config.js tailwind.config.js tsconfig.json tsconfig.no
     /front/
 
 # this needs to be moved
-COPY .env.example /front/
-RUN mv .env.example .env
-
-RUN npm install && npm run build
-
+COPY .env.example ./
+WORKDIR /front
+RUN mv .env.example ../.env && npm install && npm build
 
 ### Final stage ###
 
