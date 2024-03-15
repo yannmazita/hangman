@@ -20,13 +20,13 @@ ENV PATH="/home/appuser/.local/bin:${PATH}"
 RUN apk add --update --no-cache pipx && pipx install poetry==1.7.1
 
 # Copy python source code
-COPY ../app /python-source/app
-COPY ../poetry.lock /python-source/
-COPY ../pyproject.toml /python-source/
+COPY app/ /python-source/app
+COPY poetry.lock /python-source/
+COPY pyproject.toml /python-source/
 
 # This needs to be moved
-COPY ../.env.example /python-source/
-RUN mv .env.example .env
+COPY .env.example /python-source/
+RUN mv /python-source/.env.example /python-source/.env
 
 # Build python package
 WORKDIR /python-source
