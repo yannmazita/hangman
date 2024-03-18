@@ -27,6 +27,7 @@ RUN python -m venv /.poetry-venv && \
 COPY app/ /python-source/app
 COPY poetry.lock /python-source/
 COPY pyproject.toml /python-source/
+COPY README.md /python-source
 
 # This needs to be moved
 COPY .env.example /python-source/
