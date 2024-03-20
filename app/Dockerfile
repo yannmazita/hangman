@@ -49,7 +49,8 @@ COPY --from=python-builder /python-source/dist /application/dist
 RUN chown -R appuser:appuser /application
 
 USER appuser
-RUN /application/.venv/bin/pip install /application/dist/*.whl
+RUN python -m venv /application/.venv && \
+    /application/.venv/bin/pip install /application/dist/*.whl
 
 ENV PATH="/application/.venv/bin:${PATH}"
 ENV VIRUTAL_ENV="/application/.venv"
