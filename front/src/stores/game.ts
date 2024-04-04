@@ -10,7 +10,6 @@ export const useGameStore = defineStore('game', () => {
     const gamePaused: Ref<boolean> = ref(false); // The game has been paused.
     const game: Game = reactive({
         word_progress: '',
-        guessed_positions: [],
         tries_left: 0,
         successful_guesses: 0,
     });

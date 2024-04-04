@@ -24,7 +24,6 @@ export interface Player {
 
 export interface Game {
     word_progress: string | null,
-    guessed_positions: number[],
     guessed_letters: string[],
     tries_left: number,
     successful_guesses: number,

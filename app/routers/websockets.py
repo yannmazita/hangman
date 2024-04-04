@@ -108,7 +108,6 @@ async def start_game(user_id: UUID) -> None:
         game = games.get_game_instance(user_id)
         game_start = GameUpdate(
             word_progress=game.word_progress,
-            guessed_positions=game.guessed_positions,
             guessed_letters=game.guessed_letters,
             tries_left=game.tries_left,
             successful_guesses=game.successful_guesses,
@@ -146,7 +145,6 @@ async def guess_letter(messageData: Any, user_id: UUID) -> None:
     game = games.get_game_instance(user_id)
     game_update = GameUpdate(
         word_progress=game.word_progress,
-        guessed_positions=game.guessed_positions,
         guessed_letters=game.guessed_letters,
         tries_left=game.tries_left,
         successful_guesses=game.successful_guesses,

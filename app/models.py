@@ -18,7 +18,6 @@ class AppError(BaseModel):
 
 class GameUpdate(BaseModel):
     word_progress: str
-    guessed_positions: list[int]
     guessed_letters: list[str]
     tries_left: int
     successful_guesses: int
