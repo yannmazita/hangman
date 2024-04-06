@@ -31,7 +31,7 @@ const onSubmit = handleSubmit(async (values, { resetForm }) => {
     const message = JSON.stringify({
         action: 'guess_letter',
         data: {
-            letter: values.character,
+            letter: values.character.toLowerCase(),
         },
     });
     userStore.sendSocketMessage(message);
