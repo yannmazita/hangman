@@ -3,17 +3,11 @@
         <div class="row-span-1">
             <StatusBar class="" />
         </div>
-        <div class="row-start-4 row-end-6">
+        <div class="row-start-3 row-end-4">
             <WordToGuess></WordToGuess>
-            <CharInput />
         </div>
-        <div class="row-start-6 row-end-7">
-            <div class="flex justify-center">
-                <AppButton @click="pauseGame">{{ 'Select Screen' }}</AppButton>
-            </div>
-            <div class="flex justify-center">
-                <AppButton @click="quitGame">{{ 'Quit game' }}</AppButton>
-            </div>
+        <div class="row-start-4 row-end-7">
+            <CharInput></CharInput>
         </div>
     </div>
 </template>
