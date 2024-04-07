@@ -1,5 +1,6 @@
 <template>
-    <div class="flex flex-col justify-between h-full max-w-full lg:grid lg:grid-cols-12">
+    <!--<div class="flex flex-col justify-between h-full max-w-full lg:grid lg:grid-cols-12">-->
+    <div class="flex flex-col justify-between h-full max-w-full">
         <ProfileInformation v-if="visibleComponent == SelectScreen" />
         <KeepAlive include="GameMainView">
             <component :is="visibleComponent" />

@@ -1,16 +1,12 @@
 <template>
-    <NavBar />
-    <main>
-        <div class="flex flex-row flex-nowrap">
-            <div class="w-full flex-none">
-                <img v-bind="backgroundProperties">
-            </div>
-            <div class="w-full flex-none ml-[-100%]">
-                <router-view></router-view>
-            </div>
-        </div>
-    </main>
-    <AppFooter />
+    <div class="grid grid-cols-12">
+        <div class="col-span-12"></div>
+        <NavBar class="col-span-12"></NavBar>
+        <main class="col-span-12 h-[calc(100vh-48px)]">
+            <router-view></router-view>
+        </main>
+        <AppFooter class="col-span-12"></AppFooter>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -20,11 +16,6 @@ import background from '@/assets/background_black.jpg';
 import { reactive, onMounted } from 'vue';
 import { useClientStore } from '@/stores/client.ts';
 
-const backgroundProperties = reactive({
-    src: background,
-    alt: 'Montreuil, Japan',
-    class: `object-cover h-[calc(100vh-48px)]`,
-});
 const clientStore = useClientStore();
 
 onMounted(async () => {
