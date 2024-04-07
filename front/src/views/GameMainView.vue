@@ -1,16 +1,14 @@
 <template>
-    <div class="grid grid-rows-6 h-[calc(100vh-48px)]">
-        <div class="row-start-1 row-end-2">
-            <StatusBar class="" />
+    <div class="flex flex-col h-full">
+        <div class="grid grid-cols-12">
+            <StatusBar class="col-span-12"></StatusBar>
         </div>
-        <div class="row-start-2 row-end-3">
-        </div>
-        <div class="row-start-3 row-end-4">
-        </div>
-        <div class="row-start-4 row-end-7 flex justify-center items-end">
-            <div>
-                <WordToGuess></WordToGuess>
-                <CharInput></CharInput>
+        <div class="flex h-full">
+            <div class="grid grid-cols-12 items-end">
+                <div class="col-span-12">
+                    <WordToGuess></WordToGuess>
+                    <CharInput></CharInput>
+                </div>
             </div>
         </div>
     </div>
