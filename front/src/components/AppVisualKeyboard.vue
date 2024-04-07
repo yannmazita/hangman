@@ -2,7 +2,7 @@
     <div class="">
         <template v-for="(row, index) in keyboardRows" :key="index">
             <div class="flex justify-center">
-                <button v-for="key in row" :key="key" @click="emit('keyPress', key)" class="kbd text-white bg-blue-600 m-1">
+                <button v-for="key in row" :key="key" @click="emit('keyPress', key)" class="kbd text-white bg-cyan-700 m-1">
                     {{ key }}
                 </button>
             </div>

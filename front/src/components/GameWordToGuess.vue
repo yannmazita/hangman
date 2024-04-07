@@ -1,6 +1,6 @@
 <template>
     <div class="flex justify-center bg-yellow-500">
-        <div v-for="(char, index) in wordProgress" :key="index" class="kbd text-xs text-white bg-blue-600 m-0.5">
+        <div v-for="(char, index) in wordProgress" :key="index" class="kbd text-white bg-cyan-700 m-0.5">
             {{ char }}
         </div>
     </div>

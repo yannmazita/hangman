@@ -1,8 +1,6 @@
 <template>
     <div class="flex flex-col h-full">
-        <div class="grid grid-cols-12">
-            <StatusBar class="col-span-12"></StatusBar>
-        </div>
+        <StatusBar></StatusBar>
         <div class="flex h-full">
             <div class="grid grid-cols-12 items-end">
                 <div class="col-span-12">

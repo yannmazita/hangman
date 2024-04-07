@@ -1,12 +1,9 @@
 <template>
-    <div class="stats shadow grid grid-cols-2 rounded-none rounded-b-xl bg-cyan-600">
-        <div class="stat flex flex-col justify-evenly px-0 py-2">
-            <div class="stat-title text-sm self-center text-white">Guessed words</div>
-            <div class="stat-value text-secondary text-base self-center">{{ successfulGuesses }}</div>
-        </div>
-        <div class="stat flex flex-col justify-evenly px-0 py-2">
-            <div class="stat-title text-sm self-center text-white">Score</div>
-            <div class="stat-value text-base self-center">1337</div>
+    <div class="mx-3 my-5 grid grid-cols-12">
+        <div class="w-fit h-fit z-10 p-2 rounded-full font-bold text-amber-600 bg-yellow-300 shadow-lg shadow-gray-400">words</div>
+        <div class="flex items-end col-start-2 ps-10 pe-3 w-fit h-fit z-0 rounded-lg bg-white text-3xl font-bold text-cyan-700 shadow-lg shadow-gray-400">
+            {{ successfulGuesses
+            }}
         </div>
     </div>
 </template>
