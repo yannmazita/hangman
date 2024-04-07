@@ -1,13 +1,17 @@
 <template>
-    <div class="grid grid-rows-6">
-        <div class="row-span-1">
+    <div class="grid grid-rows-6 h-[calc(100vh-48px)]">
+        <div class="row-start-1 row-end-2">
             <StatusBar class="" />
         </div>
-        <div class="row-start-3 row-end-4">
-            <WordToGuess></WordToGuess>
+        <div class="row-start-2 row-end-3">
         </div>
-        <div class="row-start-4 row-end-7">
-            <CharInput></CharInput>
+        <div class="row-start-3 row-end-4">
+        </div>
+        <div class="row-start-4 row-end-7 flex justify-center items-end">
+            <div>
+                <WordToGuess></WordToGuess>
+                <CharInput></CharInput>
+            </div>
         </div>
     </div>
 </template>

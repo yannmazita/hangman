@@ -23,7 +23,7 @@ import { useClientStore } from '@/stores/client.ts';
 const backgroundProperties = reactive({
     src: background,
     alt: 'Montreuil, Japan',
-    class: `object-cover h-[calc(100vh-48px)] w-screen`,
+    class: `object-cover h-[calc(100vh-48px)]`,
 });
 const clientStore = useClientStore();
 
