@@ -47,9 +47,9 @@ uvicorn app.main:api --reload
 ```
 
 ### To do
-- Package python backend
-- Complete dockerization of both frontend and backend
-- Local Redis
+- Fix python package in Dockerfile
+- Limit length of queried words
+- Stop decreasing tries counter when inputting wrong letter more than once
 - User registration on client side
 - User data save on server side
 - User interface improvements
