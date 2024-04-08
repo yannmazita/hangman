@@ -26,5 +26,6 @@ export interface Game {
     word_progress: string | null,
     guessed_letters: string[],
     tries_left: number,
+    max_tries: number,
     successful_guesses: number,
 }

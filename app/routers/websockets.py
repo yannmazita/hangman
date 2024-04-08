@@ -110,6 +110,7 @@ async def start_game(user_id: UUID) -> None:
             word_progress=game.word_progress,
             guessed_letters=game.guessed_letters,
             tries_left=game.tries_left,
+            max_tries=game.MAX_TRIES,
             successful_guesses=game.successful_guesses,
         )
         game_message = WebsocketMessage(action="game_started", data=game_start)
@@ -147,6 +148,7 @@ async def guess_letter(messageData: Any, user_id: UUID) -> None:
         word_progress=game.word_progress,
         guessed_letters=game.guessed_letters,
         tries_left=game.tries_left,
+        max_tries=game.MAX_TRIES,
         successful_guesses=game.successful_guesses,
         game_over=game_over,
     )

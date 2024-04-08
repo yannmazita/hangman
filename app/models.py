@@ -21,6 +21,7 @@ class GameUpdate(BaseModel):
     guessed_letters: list[str]
     tries_left: int
     successful_guesses: int
+    max_tries: int
     game_over: bool = False
 
 
