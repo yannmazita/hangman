@@ -15,7 +15,6 @@
 import StatusBar from '@/components/GameStatusBar.vue';
 import WordToGuess from '@/components/GameWordToGuess.vue';
 import CharInput from '@/components/GameCharacterInput.vue';
-import AppButton from '@/components/AppButton.vue';
 import { useMenuStore } from '@/stores/menu.ts';
 import { useGameStore } from '@/stores/game.ts';
 

@@ -1,6 +1,6 @@
 <template>
     <!--<div ref="navBar" class="navbar bg-cyan-600 text-white min-h-min py-0 lg:py-2">-->
-    <div ref="navBar" class="navbar bg-cyan-600 text-white min-h-min py-0">
+    <div ref="navBar" class="navbar bg-base-300 text-base min-h-min py-0">
         <div class="navbar-start">
             <details class="dropdown">
                 <!--<summary class="btn btn-ghost lg:hidden">-->
@@ -10,7 +10,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
                     </svg>
                 </summary>
-                <ul class="menu menu-sm dropdown-content mt-3 z-50 p-2 shadow bg-cyan-700 rounded-box w-52">
+                <ul class="menu menu-sm dropdown-content mt-3 z-50 p-2 shadow bg-base-300 rounded-box w-52">
                     <li><router-link to="/highscores" class="text-xl">high scores</router-link></li>
                     <li><router-link to="/feedback" class="text-xl">feedback</router-link></li>
                 </ul>

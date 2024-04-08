@@ -1,6 +1,6 @@
 <template>
     <form @submit="onSubmit" method="post">
-        <div class="bg-cyan-600 w-screen">
+        <div class="bg-base-300 w-screen">
             <Keyboard @keyPress="(key) => { updateAppInput(key); }" :hiddenKeys="[]"></Keyboard>
             <AppInput v-model="character" type="hidden"></AppInput>
         </div>

@@ -1,10 +1,10 @@
 <template>
-    <div class="collapse collapse-arrow bg-cyan-600 rounded-none lg:col-start-1 lg:col-end-4">
+    <div class="collapse collapse-arrow bg-base-200 rounded-none lg:col-start-1 lg:col-end-4">
         <input type="checkbox" />
         <div ref="firstSectionTitle" class="collapse-title text-white text-xl">
             Profile
         </div>
-        <div class="collapse-content bg-cyan-700">
+        <div class="collapse-content bg-base-300">
             <div class="stat">
                 <div class="stat-figure text-secondary">
                     <div class="avatar online">

@@ -1,5 +1,5 @@
 <template>
-    <div class="grid grid-cols-12 bg-yellow-50">
+    <div class="grid grid-cols-12">
         <div class="col-span-12"></div>
         <NavBar class="col-span-12"></NavBar>
         <main class="col-span-12 h-[calc(100vh-48px)]">
