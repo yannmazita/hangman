@@ -7,6 +7,7 @@ import requests
 
 class Game:
     MAX_TRIES: int = 5
+    MAX_WORD_LENGTH: int = 8
 
     def __init__(self):
         self.word_to_guess: str = ""
@@ -76,7 +77,12 @@ class Games:
         response = await asyncio.to_thread(
             requests.get, "https://random-word-api.herokuapp.com/word?number=1"
         )
+        while len(response.json()[0]) > MAX_WORD_LENGTH:
+            response = await asyncio.to_thread(
+                requests.get, "https://random-word-api.herokuapp.com/word?number=1"
+            )
         game.word_to_guess = response.json()[0]
+
 
     def construct_word_progress(self, user_id: UUID) -> None:
         """
