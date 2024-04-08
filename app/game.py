@@ -77,7 +77,7 @@ class Games:
         response = await asyncio.to_thread(
             requests.get, "https://random-word-api.herokuapp.com/word?number=1"
         )
-        while len(response.json()[0]) > MAX_WORD_LENGTH:
+        while len(response.json()[0]) > game.MAX_WORD_LENGTH:
             response = await asyncio.to_thread(
                 requests.get, "https://random-word-api.herokuapp.com/word?number=1"
             )
