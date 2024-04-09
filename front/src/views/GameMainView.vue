@@ -1,18 +1,12 @@
 <template>
-    <div class="grid grid-rows-6">
-        <div class="row-span-1">
-            <StatusBar class="" />
-        </div>
-        <div class="row-start-4 row-end-6">
-            <WordToGuess></WordToGuess>
-            <CharInput />
-        </div>
-        <div class="row-start-6 row-end-7">
-            <div class="flex justify-center">
-                <AppButton @click="pauseGame">{{ 'Select Screen' }}</AppButton>
-            </div>
-            <div class="flex justify-center">
-                <AppButton @click="quitGame">{{ 'Quit game' }}</AppButton>
+    <div class="flex flex-col h-full">
+        <StatusBar></StatusBar>
+        <div class="flex h-full">
+            <div class="grid grid-cols-12 items-end">
+                <div class="col-span-12">
+                    <WordToGuess></WordToGuess>
+                    <CharInput></CharInput>
+                </div>
             </div>
         </div>
     </div>
@@ -21,7 +15,6 @@
 import StatusBar from '@/components/GameStatusBar.vue';
 import WordToGuess from '@/components/GameWordToGuess.vue';
 import CharInput from '@/components/GameCharacterInput.vue';
-import AppButton from '@/components/AppButton.vue';
 import { useMenuStore } from '@/stores/menu.ts';
 import { useGameStore } from '@/stores/game.ts';
 

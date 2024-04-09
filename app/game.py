@@ -7,11 +7,13 @@ import requests
 
 class Game:
     MAX_TRIES: int = 5
+    MAX_WORD_LENGTH: int = 8
 
     def __init__(self):
         self.word_to_guess: str = ""
         self.word_progress: str = ""
         self.guessed_positions: list[int] = []
+        self.guessed_letters: list[str] = []
         self.tries_left: int = Game.MAX_TRIES
         self.successful_guesses: int = 0
 
@@ -75,7 +77,12 @@ class Games:
         response = await asyncio.to_thread(
             requests.get, "https://random-word-api.herokuapp.com/word?number=1"
         )
+        while len(response.json()[0]) > game.MAX_WORD_LENGTH:
+            response = await asyncio.to_thread(
+                requests.get, "https://random-word-api.herokuapp.com/word?number=1"
+            )
         game.word_to_guess = response.json()[0]
+
 
     def construct_word_progress(self, user_id: UUID) -> None:
         """
@@ -107,7 +114,7 @@ class Games:
         game: Game = self.get_game_instance(user_id)
         game.word_to_guess = ""
 
-    def update_guessed_positions(self, user_id: UUID, character: str) -> list[int]:
+    def update_guessed_positions(self, user_id: UUID, character: str) -> None:
         """
         Updates the positions of guessed characters.
 
@@ -117,9 +124,6 @@ class Games:
         Args:
             user_id: The id of the user.
             character: The guessed character.
-
-        Returns:
-            Guessed positions list.
         """
 
         game: Game = self.get_game_instance(user_id)
@@ -134,7 +138,20 @@ class Games:
         if not guessed_corretly:
             game.tries_left -= 1
 
-        return game.guessed_positions
+    def update_guessed_letters(self, user_id: UUID, character: str) -> None:
+        """
+        Updates the guessed letters list.
+
+        This method appends the guessed character to the guessed_letters list.
+        Whether the character is correct or not.
+
+        Args:
+            user_id: The id of the user.
+            character: The guessed character.
+        """
+        game: Game = self.get_game_instance(user_id)
+        if character not in game.guessed_letters:
+            game.guessed_letters.append(character)
 
     def has_user_won(self, user_id: UUID) -> bool:
         """
@@ -176,4 +193,5 @@ class Games:
         if game.tries_left == 0:
             raise GameOver(user_id)
         self.update_guessed_positions(user_id, character)
+        self.update_guessed_letters(user_id, character)
         self.has_user_won(user_id)

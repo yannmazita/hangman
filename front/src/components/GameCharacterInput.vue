@@ -1,10 +1,8 @@
 <template>
     <form @submit="onSubmit" method="post">
-        <div class="flex flex-col px-5">
-            <AppInput v-model="character" placeholder="Type a letter" type="text" />
-        </div>
-        <div class="flex justify-center">
-            <AppButton :disabled="isSubmitting" type="submit">{{ 'Confirm' }}</AppButton>
+        <div class="bg-base-300 w-screen">
+            <Keyboard @keyPress="(key) => { updateAppInput(key); }" :hiddenKeys="[]"></Keyboard>
+            <AppInput v-model="character" type="hidden"></AppInput>
         </div>
     </form>
 </template>
@@ -15,6 +13,7 @@ import { toTypedSchema } from '@vee-validate/yup';
 import { object, string } from 'yup';
 import AppInput from '@/components/AppInput.vue';
 import AppButton from '@/components/AppButton.vue';
+import Keyboard from '@/components/AppVisualKeyboard.vue';
 
 const userStore = useUserStore();
 
@@ -32,10 +31,15 @@ const onSubmit = handleSubmit(async (values, { resetForm }) => {
     const message = JSON.stringify({
         action: 'guess_letter',
         data: {
-            letter: values.character,
+            letter: values.character.toLowerCase(),
         },
     });
     userStore.sendSocketMessage(message);
     resetForm();
 });
+
+const updateAppInput = (key: string) => {
+    character.value = key;
+};
+
 </script>

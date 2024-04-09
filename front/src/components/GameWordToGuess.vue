@@ -1,6 +1,8 @@
 <template>
-    <div class="flex justify-center text-white text-3xl">
-        {{ wordProgress }}
+    <div class="flex justify-center">
+        <div v-for="(char, index) in wordProgress" :key="index" class="kbd text-white bg-base-300 m-0.5">
+            {{ char }}
+        </div>
     </div>
 </template>
 <script setup lang="ts">
@@ -28,7 +30,7 @@ watch(socketMessage, (message) => {
 });
 
 const wordProgress = computed(() => {
-    return game.value.word_progress;
+    return game.value.word_progress.split("");
 });
 
 </script>

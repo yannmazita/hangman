@@ -1,10 +1,10 @@
 <template>
-    <div class="collapse collapse-arrow bg-base-100 rounded-none lg:col-start-10 lg:col-end-13">
+    <div class="collapse collapse-arrow bg-base-200 rounded-none lg:col-start-10 lg:col-end-13">
         <input type="checkbox" />
-        <div class="collapse-title text-xl">
+        <div class="collapse-title text-white text-xl">
             Server information (EU-West)
         </div>
-        <div class="collapse-content bg-base-200">
+        <div class="collapse-content text-white bg-base-300">
             Online players: {{ activePlayers }}
         </div>
     </div>
