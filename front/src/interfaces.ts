@@ -28,4 +28,5 @@ export interface Game {
     tries_left: number,
     max_tries: number,
     successful_guesses: number,
+    game_status: number,
 }

@@ -1,8 +1,7 @@
 <template>
-    <button class="btn" onclick="my_modal_5.showModal()">open modal</button>
-    <dialog id="my_modal_5" class="modal modal-bottom">
+    <dialog ref="continueModal" class="modal modal-bottom">
         <div class="modal-box">
-            <h3 class="font-bold text-lg">Hello!</h3>
+            <h3 class="font-bold text-lg">{{ message }}!</h3>
             <p class="py-4">Continue ?</p>
             <div class="modal-action">
                 <form method="dialog">
@@ -14,4 +13,21 @@
     </dialog>
 </template>
 <script setup lang="ts">
-</script
+import { watch, ref, Ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useGameStore } from '@/stores/game.ts';
+
+const { game } = storeToRefs(useGameStore());
+const continueModal = ref<HTMLElement | null>(null);
+const message: Ref<string> = ref("");
+
+watch(game, (newGame) => {
+    if (newGame.game_status !== 0) {
+        continueModal.value?.showModal();
+        if (newGame.game_status === 1) {
+        }
+        else if (newGame.game_status === -1) {
+        }
+    }
+});
+</script>

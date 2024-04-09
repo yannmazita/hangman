@@ -29,8 +29,7 @@ async def verify_websocket_token(websocket: WebSocket) -> None:
 
     The websocket token is the first message sent by the user.
     It contains the access token and token type. This function verifies
-    the token and closes the websocket if it is invalid.
-
+    the token and closes the websocket if it is invalint
     Args:
         websocket: The websocket to verify.
     """
@@ -132,7 +131,6 @@ async def guess_letter(messageData: Any, user_id: UUID) -> None:
         messageData: The data of the message.
         user_id: The id of the user.
     """
-    game_over: bool = False
     try:
         guess: GameGuess = GameGuess.model_validate(messageData)
         games.update_game(user_id, guess.letter)
@@ -141,7 +139,8 @@ async def guess_letter(messageData: Any, user_id: UUID) -> None:
         error_message = WebsocketMessage(action="error", data=error)
         await user_connections.send(user_id, error_message)
     except GameOver as e:
-        game_over = True
+        # handle game state when party is over
+        pass
 
     game = games.get_game_instance(user_id)
     game_update = GameUpdate(
@@ -150,7 +149,7 @@ async def guess_letter(messageData: Any, user_id: UUID) -> None:
         tries_left=game.tries_left,
         max_tries=game.MAX_TRIES,
         successful_guesses=game.successful_guesses,
-        game_over=game_over,
+        game_status=game.game_status,
     )
     game_message: WebsocketMessage = WebsocketMessage(
         action="game_started", data=game_update
@@ -213,10 +212,12 @@ async def user_endpoint(websocket: WebSocket, user_id: UUID):
 
                 if action == "start_game":
                     await start_game(user_id)
-
+                if action == "continue_game":
+                    pass
+                if action == "end_game":
+                    pass
                 if action == "guess_letter":
                     await guess_letter(message.data, user_id)
-
                 if action == "server_stats":
                     await send_server_stats(user_id)
 

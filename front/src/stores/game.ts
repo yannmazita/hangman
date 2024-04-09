@@ -14,6 +14,7 @@ export const useGameStore = defineStore('game', () => {
         tries_left: 0,
         max_tries: 0,
         successful_guesses: 0,
+        game_status: 0,
     });
     const player: Player = reactive({
         id: null,
