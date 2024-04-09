@@ -1,15 +1,17 @@
 <template>
-    <div class="mx-3 my-5 grid grid-cols-12">
-        <div class="w-fit h-fit z-10 p-2 rounded-full font-bold text-black bg-gray-300">
-            words</div>
-        <div
-            class="flex items-end col-start-2 ps-10 pe-3 w-fit h-fit z-0 rounded-lg bg-white text-3xl font-bold text-cyan-700">
-            {{ successfulGuesses }}
-        </div>
-        <div
-            class="flex justify-center items-center col-start-10 w-fit h-fit pe-10 ps-3 text-3xl font-bold text-cyan-700 bg-white rounded-lg">
-            {{ triesLeft }}
-        </div>
+    <div class="grid grid-cols-12">
+        <span id="guessInfo" class="col-start-1 relative px-2 py-1.5">
+            <span id="guessInfoWords" class="absolute z-10 p-2 rounded-full font-bold text-black bg-gray-300">words</span>
+            <span id="guessInfoGuesses" class="absolute left-9 top-2 z-0 ps-10 pe-3 rounded-lg bg-white text-3xl font-bold text-cyan-700">{{
+                successfulGuesses
+            }}</span>
+        </span>
+        <span id="triesInfo" class="col-start-10 relative p-2">
+            <span id="triesInfoTriesLeft" class="absolute z-0 pe-10 ps-3 rounded-lg bg-white text-3xl font-bold text-cyan-700">
+                {{ triesLeft }}
+            </span>
+            <span id="triesInfoHeart" class="absolute left-12 top-1.5 z-10 p-2 rounded-full font-bold text-black bg-gray-300">💙</span>
+        </span>
     </div>
 </template>
 <script setup lang="ts">
@@ -25,8 +27,5 @@ const successfulGuesses = computed(() => {
 });
 const triesLeft = computed(() => {
     return game.value.tries_left;
-});
-const maxTries = computed(() => {
-    return game.value.max_tries;
 });
 </script>
