@@ -74,15 +74,19 @@ class Games:
 
         game: Game = self.get_game_instance(user_id)
 
-        response = await asyncio.to_thread(
-            requests.get, "https://random-word-api.herokuapp.com/word?number=1"
-        )
-        while len(response.json()[0]) > game.MAX_WORD_LENGTH:
+        try:
             response = await asyncio.to_thread(
                 requests.get, "https://random-word-api.herokuapp.com/word?number=1"
             )
-        game.word_to_guess = response.json()[0]
-
+            while len(response.json()[0]) > game.MAX_WORD_LENGTH:
+                response = await asyncio.to_thread(
+                    requests.get, "https://random-word-api.herokuapp.com/word?number=1"
+                )
+            game.word_to_guess = response.json()[0]
+        except requests.exceptions.ConnectionError as e:
+            game.word_to_guess = (
+                "computer"  # very quick fix, need to integrate local word source
+            )
 
     def construct_word_progress(self, user_id: UUID) -> None:
         """
