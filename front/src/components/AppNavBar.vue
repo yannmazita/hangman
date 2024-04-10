@@ -1,6 +1,6 @@
 <template>
     <!--<div ref="navBar" class="navbar bg-cyan-600 text-white min-h-min py-0 lg:py-2">-->
-    <div ref="navBar" class="navbar bg-base-300 text-base min-h-min py-0">
+    <div ref="navBar" class="navbar bg-base-300 text-base min-h-min w-screen py-0">
         <div class="navbar-start">
             <details class="dropdown">
                 <!--<summary class="btn btn-ghost lg:hidden">-->
