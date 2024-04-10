@@ -1,12 +1,12 @@
 <template>
-    <dialog ref="continueModal" class="modal modal-bottom">
+    <dialog class="modal modal-bottom" :class="{ 'modal-open': showModal }">
         <div class="modal-box">
             <h3 class="font-bold text-lg">{{ message }}!</h3>
             <p class="py-4">Continue ?</p>
             <div class="modal-action">
                 <form method="dialog">
-                    <button class="btn">Yes</button>
-                    <button class="btn">No</button>
+                    <button @click="continueChoice = true" class="btn">Yes</button>
+                    <button @click="continueChoice = false" class="btn">No</button>
                 </form>
             </div>
         </div>
@@ -18,15 +18,18 @@ import { storeToRefs } from 'pinia';
 import { useGameStore } from '@/stores/game.ts';
 
 const { game } = storeToRefs(useGameStore());
-const continueModal = ref<HTMLElement | null>(null);
+const showModal = ref<boolean>(false);
+const continueChoice = ref<boolean>(false);
 const message: Ref<string> = ref("");
 
 watch(game, (newGame) => {
     if (newGame.game_status !== 0) {
-        continueModal.value?.showModal();
+        showModal.value = true;
         if (newGame.game_status === 1) {
+            message.value = "You won!"
         }
         else if (newGame.game_status === -1) {
+            message.value = "You lost!"
         }
     }
 });
