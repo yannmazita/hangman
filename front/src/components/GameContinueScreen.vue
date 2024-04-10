@@ -16,10 +16,10 @@
 import { computed, watch, ref, Ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useGameStore } from '@/stores/game.ts';
-import { useClientStore } from '@/stores/client.ts';
+import { useUserStore } from '@/stores/user.ts';
 import { useMenuStore } from '@/stores/menu.ts';
 
-const clientStore = useClientStore();
+const userStore = useUserStore();
 const menuStore = useMenuStore();
 const gameStore = useGameStore();
 const { game } = storeToRefs(useGameStore());
@@ -34,7 +34,7 @@ const continueGame = async function (choice: boolean) {
     if (choice) {
         showModal.value = false;
         try {
-            await clientStore.sendSocketMessage(JSON.stringify({
+            await userStore.sendSocketMessage(JSON.stringify({
                 action: 'continue_game',
                 data: null
             }));
@@ -45,7 +45,7 @@ const continueGame = async function (choice: boolean) {
     else {
         showModal.value = false;
         try {
-            await clientStore.sendSocketMessage(JSON.stringify({
+            await userStore.sendSocketMessage(JSON.stringify({
                 action: 'end_game',
                 data: null
             }));
