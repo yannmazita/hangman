@@ -8,7 +8,7 @@ import requests
 class Game:
     """
     The game.
-    
+
     Attributes:
         MAX_TRIES: The maximum number of tries.
         MAX_WORD_LENGTH: The maximum word length.
@@ -21,6 +21,7 @@ class Game:
         successful_guesses: The number of successful guesses.
         game_status: The status of the game. 0: Not decided, 1: Won, -1: Lost.
     """
+
     MAX_TRIES: int = 5
     MAX_WORD_LENGTH: int = 8
 
@@ -127,16 +128,6 @@ class Games:
                 word_progress_split[pos] = game.word_to_guess[pos]
             game.word_progress = "".join(word_progress_split)
 
-    def update_word_to_guess(self, user_id: UUID) -> None:
-        """
-        Updates the word to guess.
-
-        Args:
-            user_id: The id of the user.
-        """
-        game: Game = self.get_game_instance(user_id)
-        game.word_to_guess = ""
-
     def update_guessed_positions(self, user_id: UUID, character: str) -> None:
         """
         Updates the positions of guessed characters.
@@ -195,15 +186,41 @@ class Games:
             else:
                 game.game_status = 0
 
+    def clear_game(self, user_id: UUID) -> None:
+        """
+        Clears the game.
+        Args:
+            user_id: The id of the user.
+        """
+        game: Game = self.get_game_instance(user_id)
+        game.word_to_guess = ""
+        game.word_progress = ""
+        game.guessed_positions = []
+        game.guessed_letters = []
+        game.tries_left = Game.MAX_TRIES
+        game.game_status = 0
+
     async def start_game(self, user_id: UUID) -> None:
         """
         Starts a new game.
         Args:
             user_id: The id of the user.
         """
-        self.create_game_instance(user_id)
+        if user_id not in self.games:
+            self.create_game_instance(user_id)
+        else:
+            self.clear_game(user_id)
         await self.get_random_word(user_id)
         self.construct_word_progress(user_id)
+
+    async def continue_game(self, user_id: UUID) -> None:
+        """
+        Continues the game.
+        Args:
+            user_id: The id of the user.
+        """
+        self.clear_game(user_id)
+        await self.start_game(user_id)
 
     def update_game(self, user_id: UUID, character: str) -> None:
         """

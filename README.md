@@ -48,9 +48,7 @@ uvicorn app.main:api --reload
 
 ### To do
 - Fix python package in Dockerfile
-- Limit length of queried words
-- Stop decreasing tries counter when inputting wrong letter more than once
 - User registration on client side
 - User data save on server side
-- User interface improvements
 - Highscore, feedback and settings pages
+- Actual hangman drawings (renders?)
