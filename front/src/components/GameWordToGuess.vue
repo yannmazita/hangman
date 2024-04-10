@@ -17,9 +17,9 @@ const { socketMessage } = storeToRefs(userStore);
 const { game } = storeToRefs(gameStore);
 
 watch(socketMessage, (message) => {
-    console.log('Inside GameWordToGuess, socketMessage watcher, message: ', message);
+    //console.log('Inside GameWordToGuess, socketMessage watcher, message: ', message);
     if (message !== null) {
-        console.log('Inside GameWordToGuess, socketMessage watcher, message.action: ', message.action);
+        //console.log('Inside GameWordToGuess, socketMessage watcher, message.action: ', message.action);
         if (message.action === 'game_started') {
             console.log('Inside GameWordToGuess, socketMessage watcher, message.data: ', message.data);
             Object.assign(game.value, message.data);
