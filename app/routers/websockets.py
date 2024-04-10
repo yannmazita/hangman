@@ -157,6 +157,31 @@ async def guess_letter(messageData: Any, user_id: UUID) -> None:
     await user_connections.send(user_id, game_message)
 
 
+async def continue_game(user_id: UUID) -> None:
+    """
+    Continues the game for the user.
+    This function continues the game for the user and sends the game update to the user.
+    Args:
+        user_id: The id of the user.
+    """
+    try:
+        await games.continue_game(user_id)
+        game = games.get_game_instance(user_id)
+        game_start = GameUpdate(
+            word_progress=game.word_progress,
+            guessed_letters=game.guessed_letters,
+            tries_left=game.tries_left,
+            max_tries=game.MAX_TRIES,
+            successful_guesses=game.successful_guesses,
+        )
+        game_message = WebsocketMessage(action="game_started", data=game_start)
+        await user_connections.send(user_id, game_message)
+    except ValidationError as e:
+        error: AppError = AppError(error=str(e))
+        error_message = WebsocketMessage(action="error", data=error)
+        await user_connections.send(user_id, error_message)
+
+
 async def send_server_stats(user_id: UUID) -> None:
     """
     Sends server stats to the user.
@@ -213,8 +238,10 @@ async def user_endpoint(websocket: WebSocket, user_id: UUID):
                 if action == "start_game":
                     await start_game(user_id)
                 if action == "continue_game":
-                    pass
+                    await continue_game(user_id)
                 if action == "end_game":
+                    # for now when client/user disconnects the websocket,
+                    # on_client_disconnect/on_user_disconnect handles client/user purging
                     pass
                 if action == "guess_letter":
                     await guess_letter(message.data, user_id)
