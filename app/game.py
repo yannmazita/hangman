@@ -6,21 +6,40 @@ import requests
 
 
 class Game:
+    """
+    The game.
+    
+    Attributes:
+        MAX_TRIES: The maximum number of tries.
+        MAX_WORD_LENGTH: The maximum word length.
+
+        word_to_guess: The word to guess.
+        word_progress: The word in its current state of discovery.
+        guessed_positions: The positions of guessed characters.
+        guessed_letters: The guessed letters.
+        tries_left: The number of tries left.
+        successful_guesses: The number of successful guesses.
+        game_status: The status of the game. 0: Not decided, 1: Won, -1: Lost.
+    """
     MAX_TRIES: int = 5
     MAX_WORD_LENGTH: int = 8
 
     def __init__(self):
+        """
+        Initializes the game.
+        """
         self.word_to_guess: str = ""
         self.word_progress: str = ""
         self.guessed_positions: list[int] = []
         self.guessed_letters: list[str] = []
         self.tries_left: int = Game.MAX_TRIES
         self.successful_guesses: int = 0
+        self.game_status: int = 0
 
 
 class Games:
     """
-    Main game logic.
+    The games manager.
     """
 
     def __init__(self):
@@ -74,15 +93,19 @@ class Games:
 
         game: Game = self.get_game_instance(user_id)
 
-        response = await asyncio.to_thread(
-            requests.get, "https://random-word-api.herokuapp.com/word?number=1"
-        )
-        while len(response.json()[0]) > game.MAX_WORD_LENGTH:
+        try:
             response = await asyncio.to_thread(
                 requests.get, "https://random-word-api.herokuapp.com/word?number=1"
             )
-        game.word_to_guess = response.json()[0]
-
+            while len(response.json()[0]) > game.MAX_WORD_LENGTH:
+                response = await asyncio.to_thread(
+                    requests.get, "https://random-word-api.herokuapp.com/word?number=1"
+                )
+            game.word_to_guess = response.json()[0]
+        except requests.exceptions.ConnectionError as e:
+            game.word_to_guess = (
+                "computer"  # very quick fix, need to integrate local word source
+            )
 
     def construct_word_progress(self, user_id: UUID) -> None:
         """
@@ -153,24 +176,24 @@ class Games:
         if character not in game.guessed_letters:
             game.guessed_letters.append(character)
 
-    def has_user_won(self, user_id: UUID) -> bool:
+    def update_game_status(self, user_id: UUID) -> None:
         """
-        Checks if the user has won.
+        Updates the game status.
 
         Args:
             user_id: The id of the user.
-
-        Returns:
-            True when user has won, false otherwise.
         """
 
         game: Game = self.get_game_instance(user_id)
 
-        if not game.word_to_guess == game.word_progress:
-            return False
-
-        game.successful_guesses += 1
-        return True
+        if game.game_status == 0:
+            if game.tries_left == 0:
+                game.game_status = -1
+            elif game.word_to_guess == game.word_progress:
+                game.game_status = 1
+                game.successful_guesses += 1
+            else:
+                game.game_status = 0
 
     async def start_game(self, user_id: UUID) -> None:
         """
@@ -194,4 +217,4 @@ class Games:
             raise GameOver(user_id)
         self.update_guessed_positions(user_id, character)
         self.update_guessed_letters(user_id, character)
-        self.has_user_won(user_id)
+        self.update_game_status(user_id)

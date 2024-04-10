@@ -22,7 +22,7 @@ class GameUpdate(BaseModel):
     tries_left: int
     successful_guesses: int
     max_tries: int
-    game_over: bool = False
+    game_status: int = 0
 
 
 class GameGuess(BaseModel):
