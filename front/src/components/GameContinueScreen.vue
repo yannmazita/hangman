@@ -17,8 +17,11 @@ import { computed, watch, ref, Ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useGameStore } from '@/stores/game.ts';
 import { useClientStore } from '@/stores/client.ts';
+import { useMenuStore } from '@/stores/menu.ts';
 
 const clientStore = useClientStore();
+const menuStore = useMenuStore();
+const gameStore = useGameStore();
 const { game } = storeToRefs(useGameStore());
 const showModal = ref<boolean>(false);
 const message: Ref<string> = ref("");
@@ -50,6 +53,8 @@ const continueGame = async function (choice: boolean) {
             console.log(error);
         }
 
+        gameStore.endGame();
+        menuStore.resetChoices();
     }
 };
 
