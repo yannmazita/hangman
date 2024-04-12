@@ -13,7 +13,7 @@ npm install
 ### Application server
 
 Dependencies are defined in `pyproject.toml` and `requirements.txt`.
-The application server can be installed in a virtual environment. For example using Poetry and inside the `app` directory:
+The application server can be installed in a virtual environment. For example using Poetry and in the project root:
 ```commandline
 poetry install
 ```
@@ -37,13 +37,13 @@ npm run dev
 ```
 
 ### Application server
-Activate the virtual environment where the server is installed. For example using Poetry and inside the `app` directory:
+Activate the virtual environment where the server is installed. For example using Poetry and in the project root:
 ```commandline
 poetry shell
 ```
-Then start the uvicorn server (development):
+Then run:
 ```commandline
-uvicorn app.main:api --reload
+python -m app.main
 ```
 
 ### To do
