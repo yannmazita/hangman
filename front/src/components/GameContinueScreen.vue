@@ -1,16 +1,13 @@
 <template>
-    <dialog class="modal modal-bottom" :class="{ 'modal-open': showModal }">
-        <div class="modal-box">
-            <h3 class="font-bold text-lg">{{ message }}</h3>
-            <p class="py-4">Continue ?</p>
-            <div class="modal-action">
-                <form method="dialog">
-                    <button @click="continueGame(true)" class="btn">Yes</button>
-                    <button @click="continueGame(false)" class="btn">No</button>
-                </form>
-            </div>
-        </div>
-    </dialog>
+    <AppModal
+        @click-event-a="() => {continueGame(true);}"
+        @click-event-b="() => {continueGame(false);}"
+        :show-modal="showModal">
+        <template #headerText>{{ message }}</template>
+        <template #paragraphText>Continue ?</template>
+        <template #buttonTextA>Yes</template>
+        <template #buttonTextB>No</template>
+    </AppModal>
 </template>
 <script setup lang="ts">
 import { computed, watch, ref, Ref } from 'vue';
@@ -18,6 +15,7 @@ import { storeToRefs } from 'pinia';
 import { useGameStore } from '@/stores/game.ts';
 import { useUserStore } from '@/stores/user.ts';
 import { useMenuStore } from '@/stores/menu.ts';
+import AppModal from '@/components/AppModalTwoButtons.vue';
 
 const userStore = useUserStore();
 const menuStore = useMenuStore();
