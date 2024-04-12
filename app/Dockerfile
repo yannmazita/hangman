@@ -29,9 +29,10 @@ COPY poetry.lock /python-source/
 COPY pyproject.toml /python-source/
 COPY README.md /python-source
 
-# This needs to be moved
+################### This needs to be cleaned up
 COPY .env.example /python-source/
 RUN mv /python-source/.env.example /python-source/.env
+################### This needs to be cleaned up
 
 # Build python package
 WORKDIR /python-source
@@ -49,9 +50,15 @@ COPY --from=python-builder /python-source/dist /application/dist
 RUN chown -R appuser:appuser /application
 
 USER appuser
-ENV PATH="/application/.venv/bin:/application/${USER}/.local/bin:${PATH}"
+ENV PATH="/application/.venv/bin:/application/${USER}:/.local/bin:${PATH}"
 ENV VIRTUAL_ENV="/application/.venv"
-RUN python -m venv /application/.venv && pip install /application/dist/*.whl
 
+################### This needs to be cleaned up
+RUN python -m venv /application/.venv \
+    && python -m pip install /application/dist/*.whl \
+    && mv /application/.venv/lib/python3.11/site-packages/app /application/
+COPY --from=python-builder /python-source/.env /application/
 
-# CMD ["uvicorn", "app.main:app", "--host"]
+EXPOSE 8000
+CMD ["python", "-m", "app.main"]
+################### This needs to be cleaned up

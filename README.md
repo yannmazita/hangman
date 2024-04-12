@@ -1,6 +1,6 @@
 # Hangman
 
-Simple hangman guessing game using VueJS and FastAPI.
+Hangman guessing game using VueJS and FastAPI.
 
 ## Installing
 
@@ -13,14 +13,27 @@ npm install
 ### Application server
 
 Dependencies are defined in `pyproject.toml` and `requirements.txt`.
-The application server can be installed in a virtual environment. For example using Poetry and inside the `app` directory:
+The application server can be installed in a virtual environment. For example using Poetry and in the project root:
 ```commandline
 poetry install
 ```
 
-## Starting
+## Running
 
-### Environment
+### Using Docker
+Both frontend and backend are dockerized. To start them, run in the project directory:
+```commandline
+docker compose up [--build]
+```
+or
+```commandline
+docker compose run <frontend | backend> [--build]
+```
+The application is served to `localhost:5173` .
+
+### From source
+
+#### Environment
 Create a `.env` file at the root of the cloned repository. See `.env.example` for an example.
 The `ALGORITHM` and `SECRET_KEY` keys are used to sign JWT tokens.
 Change the value of `SECRET_KEY` to a randomly generated key using for example:
@@ -29,25 +42,25 @@ openssl rand -hex 32
 ```
 `ORIGINS` and `VITE_API_URL` keys define respectively the URLs where the user interface and the API are accessible.
 
-### User interface
+#### User interface
 
 Start the vite development server using:
 ```commandline
 npm run dev
 ```
 
-### Application server
-Activate the virtual environment where the server is installed. For example using Poetry and inside the `app` directory:
+#### Application server
+Activate the virtual environment where the server is installed. For example using Poetry and in the project root:
 ```commandline
 poetry shell
 ```
-Then start the uvicorn server (development):
+Then run:
 ```commandline
 uvicorn app.main:api --reload
 ```
 
-### To do
-- Fix python package in Dockerfile
+## To do
+- Clean up environment variable usage in dockerfile
 - User registration on client side
 - User data save on server side
 - Highscore, feedback and settings pages

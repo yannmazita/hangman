@@ -2,6 +2,7 @@ import os
 import json
 from contextlib import asynccontextmanager
 
+import uvicorn
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -38,3 +39,18 @@ api.include_router(tokens.router)
 api.include_router(players.router)
 api.include_router(users.router)
 api.include_router(websockets.router)
+
+
+def start_server():
+    uvicorn.run(
+        "app.main:api",
+        host="0.0.0.0",
+        port=8000,
+        log_level="info",
+    )
+    # when reload=true, the 1st argument the location of main as module and a string
+    # ie: "app.main:api"
+
+
+if __name__ == "__main__":
+    start_server()
