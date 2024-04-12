@@ -6,7 +6,7 @@
         <template #headerText>{{ message }}</template>
         <template #paragraphText>Continue ?</template>
         <template #buttonTextA>Yes</template>
-        <template #buttonTextB>Yes</template>
+        <template #buttonTextB>No</template>
     </AppModal>
 </template>
 <script setup lang="ts">
