@@ -58,5 +58,7 @@ RUN python -m venv /application/.venv \
     && python -m pip install /application/dist/*.whl \
     && mv /application/.venv/lib/python3.11/site-packages/app /application/
 COPY --from=python-builder /python-source/.env /application/
+
+EXPOSE 8000
 CMD ["python", "-m", "app.main"]
 ################### This needs to be cleaned up
