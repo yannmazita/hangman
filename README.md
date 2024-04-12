@@ -18,7 +18,7 @@ The application server can be installed in a virtual environment. For example us
 poetry install
 ```
 
-## Starting
+## Running
 
 ### Environment
 Create a `.env` file at the root of the cloned repository. See `.env.example` for an example.
@@ -45,8 +45,17 @@ Then run:
 ```commandline
 python -m app.main
 ```
+## Running (Docker)
+Both frontend and backend are dockerized. To start them, run in the project directory:
+```commandline
+docker compose up [--build]
+```
+or
+```commandline
+docker compose run <frontend | backend> [--build]
+```
 
-### To do
+## To do
 - Fix python package in Dockerfile
 - User registration on client side
 - User data save on server side
