@@ -1,6 +1,6 @@
 # Hangman
 
-Simple hangman guessing game using VueJS and FastAPI.
+Hangman guessing game using VueJS and FastAPI.
 
 ## Installing
 
@@ -29,6 +29,7 @@ or
 ```commandline
 docker compose run <frontend | backend> [--build]
 ```
+The application is served to `localhost:5173` .
 
 ### From source
 
