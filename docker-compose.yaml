@@ -4,7 +4,11 @@ services:
     build:
       context: ./
       dockerfile: front/Dockerfile
+    ports:
+      - "5173:5173"
   backend:
     build:
       context: ./
       dockerfile: app/Dockerfile
+    ports:
+      - "8000:8000"

@@ -46,11 +46,10 @@ def start_server():
         "app.main:api",
         host="0.0.0.0",
         port=8000,
-        log_level="debug",
-        reload=True,
+        log_level="info",
     )
-    # when reload=false, simple pass the FastAPI instance app as the first parameter
-    # and not as a string
+    # when reload=true, the 1st argument the location of main as module and a string
+    # ie: "app.main:api"
 
 
 if __name__ == "__main__":

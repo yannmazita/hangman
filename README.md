@@ -55,7 +55,7 @@ poetry shell
 ```
 Then run:
 ```commandline
-python -m app.main
+uvicorn app.main:api --reload
 ```
 
 ## To do
