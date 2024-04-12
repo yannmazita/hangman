@@ -43,11 +43,14 @@ api.include_router(websockets.router)
 
 def start_server():
     uvicorn.run(
-        api,
+        "app.main:api",
         host="0.0.0.0",
         port=8000,
         log_level="debug",
+        reload=True,
     )
+    # when reload=false, simple pass the FastAPI instance app as the first parameter
+    # and not as a string
 
 
 if __name__ == "__main__":

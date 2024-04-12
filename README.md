@@ -20,32 +20,7 @@ poetry install
 
 ## Running
 
-### Environment
-Create a `.env` file at the root of the cloned repository. See `.env.example` for an example.
-The `ALGORITHM` and `SECRET_KEY` keys are used to sign JWT tokens.
-Change the value of `SECRET_KEY` to a randomly generated key using for example:
-```commandline
-openssl rand -hex 32
-```
-`ORIGINS` and `VITE_API_URL` keys define respectively the URLs where the user interface and the API are accessible.
-
-### User interface
-
-Start the vite development server using:
-```commandline
-npm run dev
-```
-
-### Application server
-Activate the virtual environment where the server is installed. For example using Poetry and in the project root:
-```commandline
-poetry shell
-```
-Then run:
-```commandline
-python -m app.main
-```
-## Running (Docker)
+### Using Docker
 Both frontend and backend are dockerized. To start them, run in the project directory:
 ```commandline
 docker compose up [--build]
@@ -55,8 +30,36 @@ or
 docker compose run <frontend | backend> [--build]
 ```
 
+### From source
+
+#### Environment
+Create a `.env` file at the root of the cloned repository. See `.env.example` for an example.
+The `ALGORITHM` and `SECRET_KEY` keys are used to sign JWT tokens.
+Change the value of `SECRET_KEY` to a randomly generated key using for example:
+```commandline
+openssl rand -hex 32
+```
+`ORIGINS` and `VITE_API_URL` keys define respectively the URLs where the user interface and the API are accessible.
+
+#### User interface
+
+Start the vite development server using:
+```commandline
+npm run dev
+```
+
+#### Application server
+Activate the virtual environment where the server is installed. For example using Poetry and in the project root:
+```commandline
+poetry shell
+```
+Then run:
+```commandline
+python -m app.main
+```
+
 ## To do
-- Fix python package in Dockerfile
+- Clean up environment variable usage in dockerfile
 - User registration on client side
 - User data save on server side
 - Highscore, feedback and settings pages
