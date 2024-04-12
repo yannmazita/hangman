@@ -3,10 +3,10 @@
         @click-event-a="() => {continueGame(true);}"
         @click-event-b="() => {continueGame(false);}"
         :show-modal="showModal">
-        <template #headerText">{{ message }}</template>
-        <template #paragraphText">Continue ?</template>
-        <template #buttonTextA">Yes</template>
-        <template #buttonTextB">Yes</template>
+        <template #headerText>{{ message }}</template>
+        <template #paragraphText>Continue ?</template>
+        <template #buttonTextA>Yes</template>
+        <template #buttonTextB>Yes</template>
     </AppModal>
 </template>
 <script setup lang="ts">
