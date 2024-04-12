@@ -5,8 +5,8 @@
             <p class="py-4"><slot name="paragraphText"></slot></p>
             <div class="modal-action">
                 <form method="dialog">
-                    <button @click="emit('clickEventA', true)" class="btn"><slot name="buttonTextA"></slot></button>
-                    <button @click="emit('clickEventB', true)" class="btn"><slot name="buttonTextB"></slot></button>
+                    <button @click="emit('clickEventA', true)" class="btn mr-2"><slot name="buttonTextA"></slot></button>
+                    <button @click="emit('clickEventB', true)" class="btn ml-2"><slot name="buttonTextB"></slot></button>
                 </form>
             </div>
         </div>
