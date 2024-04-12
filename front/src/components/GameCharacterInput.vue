@@ -12,7 +12,6 @@ import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/yup';
 import { object, string } from 'yup';
 import AppInput from '@/components/AppInput.vue';
-import AppButton from '@/components/AppButton.vue';
 import Keyboard from '@/components/AppVisualKeyboard.vue';
 
 const userStore = useUserStore();
@@ -22,7 +21,7 @@ const schema = toTypedSchema(
         character: string().required().min(1).max(1).default(''),
     }),
 );
-const { errors, handleSubmit, isSubmitting, defineField } = useForm({
+const { handleSubmit, defineField } = useForm({
     validationSchema: schema,
 });
 const [character] = defineField('character');
