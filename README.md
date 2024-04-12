@@ -51,4 +51,5 @@ uvicorn app.main:api --reload
 - User registration on client side
 - User data save on server side
 - Highscore, feedback and settings pages
-- Actual hangman drawings (renders?)
+- UX: Actual hangman drawings (renders?)
+- UX: Give loading feedback to user
