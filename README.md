@@ -23,11 +23,11 @@ poetry install
 ### Using Docker
 Both frontend and backend are dockerized. To start them, run in the project directory:
 ```commandline
-docker compose up [--build]
+docker compose up -d [--build]
 ```
 or
 ```commandline
-docker compose run <frontend | backend> [--build]
+docker compose run -d [--build] <frontend | backend>
 ```
 The application is served to `localhost:5173` .
 
