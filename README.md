@@ -4,6 +4,8 @@ Hangman guessing game using VueJS and FastAPI.
 
 ## Installing
 
+If you only plan on running the Docker containers you can directly jump to [Running using Docker](#using-docker).
+
 ### User interface
 
 The user interface can be installed using `npm`. Inside the `front` directory run:
