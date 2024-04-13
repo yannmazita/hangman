@@ -59,6 +59,11 @@ Then run:
 uvicorn app.main:api --reload
 ```
 
+## Details
+
+`Typescript`, `Vite`, `VueJS` frontend, served through `NGINX`.
+`Python`, `FastAPI` backend, served through `uvicorn`.
+
 ## To do
 - Clean up environment variable usage in dockerfile
 - User registration on client side
