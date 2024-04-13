@@ -23,11 +23,11 @@ poetry install
 ### Using Docker
 Both frontend and backend are dockerized. To start them, run in the project directory:
 ```commandline
-docker compose up [--build]
+docker compose up -d [--build]
 ```
 or
 ```commandline
-docker compose run <frontend | backend> [--build]
+docker compose run -d [--build] <frontend | backend>
 ```
 The application is served to `localhost:5173` .
 
@@ -59,8 +59,14 @@ Then run:
 uvicorn app.main:api --reload
 ```
 
+## Details
+
+`Typescript`, `Vite`, `VueJS` frontend, served through `NGINX`. NGIX server running as frontend `Docker` service.
+`Python`, `FastAPI` backend, served through `uvicorn`. Uvicorn server running as backend Docker service.
+
 ## To do
-- Clean up environment variable usage in dockerfile
+- Deployment: Finish up Terraform IaC
+- Deployment: Clean up environment variable usage in dockerfile
 - User registration on client side
 - User data save on server side
 - Highscore, feedback and settings pages
