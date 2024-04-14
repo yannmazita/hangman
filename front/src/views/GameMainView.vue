@@ -1,10 +1,10 @@
 <template>
-    <div class="flex flex-col h-full">
-        <StatusBar class="mb-8"></StatusBar>
+    <div id="game-main-view-container" class="flex flex-col h-full">
+        <StatusBar id="game-status-bar" class="mb-8"></StatusBar>
         <Continue></Continue>
-        <div class="flex h-full">
-            <div class="grid grid-cols-12 items-end">
-                <div class="col-span-12">
+        <div id="game-main-view" class="flex flex-col h-full">
+            <div id="game-word-container" class="mt-auto w-full">
+                <div id="game-word-keyboard" class="w-full">
                     <WordToGuess></WordToGuess>
                     <CharInput></CharInput>
                 </div>
