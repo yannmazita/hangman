@@ -67,7 +67,6 @@ uvicorn app.main:api --reload
 `Python`, `FastAPI` backend, served through `uvicorn`. Uvicorn server running as backend Docker service.
 
 ## To do
-- Deployment: Finish up Terraform IaC
 - Deployment: Clean up environment variable usage in dockerfile
 - User registration on client side
 - User data save on server side
