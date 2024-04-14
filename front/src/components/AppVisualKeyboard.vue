@@ -1,12 +1,13 @@
 <template>
-    <div class="">
-        <template v-for="(row, index) in keyboardRows" :key="index">
-            <div class="flex justify-center">
-                <button v-for="key in row" :key="key" @click="emit('keyPress', key)" class="kbd text-white bg-cyan-700 m-1">
+    <div id="app-visual-keyboard-container">
+        <div :id="`app-visual-keyboard-row-container-${index}`" v-for="(row, index) in keyboardRows" :key="index">
+            <div :id="`app-visual-keyboard-row-${index}`" class="flex justify-center">
+                <button :id="`app-visual-keyboard-key-${key}`" v-for="key in row" :key="key" @click="emit('keyPress', key)"
+                    class="kbd text-white bg-cyan-700 m-1">
                     {{ key }}
                 </button>
             </div>
-        </template>
+        </div>
     </div>
 </template>
 
