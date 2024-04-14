@@ -17,19 +17,4 @@ import StatusBar from '@/components/GameStatusBar.vue';
 import WordToGuess from '@/components/GameWordToGuess.vue';
 import CharInput from '@/components/GameCharacterInput.vue';
 import Continue from '@/components/GameContinueScreen.vue';
-import { useMenuStore } from '@/stores/menu.ts';
-import { useGameStore } from '@/stores/game.ts';
-
-const menuStore = useMenuStore();
-const gameStore = useGameStore();
-
-const quitGame = function () {
-    gameStore.endGame();
-    menuStore.resetChoices();
-};
-
-const pauseGame = function () {
-    //gameStore.gamePaused = true;
-    menuStore.resetChoices();
-};
 </script>
