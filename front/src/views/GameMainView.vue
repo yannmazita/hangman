@@ -1,10 +1,10 @@
 <template>
-    <div class="flex flex-col h-full">
-        <StatusBar class="mb-8"></StatusBar>
+    <div id="game-main-view-container" class="flex flex-col h-full">
+        <StatusBar></StatusBar>
         <Continue></Continue>
-        <div class="flex h-full">
-            <div class="grid grid-cols-12 items-end">
-                <div class="col-span-12">
+        <div id="game-main-view" class="flex flex-col h-full">
+            <div id="game-word-container" class="mt-auto w-full">
+                <div id="game-word-keyboard" class="w-full">
                     <WordToGuess></WordToGuess>
                     <CharInput></CharInput>
                 </div>
@@ -17,19 +17,4 @@ import StatusBar from '@/components/GameStatusBar.vue';
 import WordToGuess from '@/components/GameWordToGuess.vue';
 import CharInput from '@/components/GameCharacterInput.vue';
 import Continue from '@/components/GameContinueScreen.vue';
-import { useMenuStore } from '@/stores/menu.ts';
-import { useGameStore } from '@/stores/game.ts';
-
-const menuStore = useMenuStore();
-const gameStore = useGameStore();
-
-const quitGame = function () {
-    gameStore.endGame();
-    menuStore.resetChoices();
-};
-
-const pauseGame = function () {
-    //gameStore.gamePaused = true;
-    menuStore.resetChoices();
-};
 </script>

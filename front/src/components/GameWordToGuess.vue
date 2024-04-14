@@ -1,6 +1,6 @@
 <template>
-    <div class="flex justify-center">
-        <div v-for="(char, index) in wordProgress" :key="index" class="kbd text-white bg-base-300 m-0.5">
+    <div id="game-word-to-guess-container" class="flex justify-center my-4">
+        <div :id="`game-word-to-guess-char-${char}`" v-for="(char, index) in wordProgress" :key="index" class="kbd text-white bg-base-300 m-0.5">
             {{ char }}
         </div>
     </div>
@@ -17,9 +17,7 @@ const { socketMessage } = storeToRefs(userStore);
 const { game } = storeToRefs(gameStore);
 
 watch(socketMessage, (message) => {
-    //console.log('Inside GameWordToGuess, socketMessage watcher, message: ', message);
     if (message !== null) {
-        //console.log('Inside GameWordToGuess, socketMessage watcher, message.action: ', message.action);
         if (message.action === 'game_started') {
             console.log('Inside GameWordToGuess, socketMessage watcher, message.data: ', message.data);
             Object.assign(game.value, message.data);
@@ -30,7 +28,7 @@ watch(socketMessage, (message) => {
 });
 
 const wordProgress = computed(() => {
-    return game.value.word_progress.split("");
+    return game.value.word_progress?.split("");
 });
 
 </script>

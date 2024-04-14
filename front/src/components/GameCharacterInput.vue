@@ -1,10 +1,12 @@
 <template>
-    <form @submit="onSubmit" method="post">
-        <div class="bg-base-300 w-screen">
-            <Keyboard @keyPress="(key) => { updateAppInput(key); }" :hiddenKeys="[]"></Keyboard>
-            <AppInput v-model="character" type="hidden"></AppInput>
-        </div>
-    </form>
+    <div id="game-character-input-container">
+        <form @submit="onSubmit" method="post">
+            <div class="bg-base-300">
+                <Keyboard @keyPress="(key) => { updateAppInput(key); }" :hiddenKeys="[]"></Keyboard>
+                <AppInput v-model="character" type="hidden"></AppInput>
+            </div>
+        </form>
+    </div>
 </template>
 <script setup lang="ts">
 import { useUserStore } from '@/stores/user.js';

@@ -12,8 +12,7 @@
 <script setup lang="ts">
 import NavBar from '@/components/AppNavBar.vue'
 import AppFooter from '@/components/AppFooter.vue'
-import background from '@/assets/background_black.jpg';
-import { reactive, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import { useClientStore } from '@/stores/client.ts';
 
 const clientStore = useClientStore();
