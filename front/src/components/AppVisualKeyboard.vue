@@ -1,5 +1,5 @@
 <template>
-    <div id="app-visual-keyboard-container">
+    <div id="app-visual-keyboard-container" class="py-8">
         <div :id="`app-visual-keyboard-row-container-${index}`" v-for="(row, index) in keyboardRows" :key="index">
             <div :id="`app-visual-keyboard-row-${index}`" class="flex justify-center">
                 <button :id="`app-visual-keyboard-key-${key}`" v-for="key in row" :key="key" @click="emit('keyPress', key)"
