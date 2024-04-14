@@ -20,7 +20,7 @@ resource "aws_instance" "hangman" {
     connection {
         type        = "ssh"
         user        = "var.aws_ssh_user"
-        private_key = file(var.aws_ssh_key_path)
+        private_key = file(var.aws_private_key_path)
         #host        = aws_instance.hangman.public_ip
         host       = self.public_ip
     }
