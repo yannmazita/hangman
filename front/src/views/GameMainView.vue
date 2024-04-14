@@ -1,6 +1,6 @@
 <template>
     <div id="game-main-view-container" class="flex flex-col h-full">
-        <StatusBar id="game-status-bar" class="mb-8"></StatusBar>
+        <StatusBar></StatusBar>
         <Continue></Continue>
         <div id="game-main-view" class="flex flex-col h-full">
             <div id="game-word-container" class="mt-auto w-full">
