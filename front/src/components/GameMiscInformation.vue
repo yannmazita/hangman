@@ -13,7 +13,7 @@
 import { computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useGameStore } from '@/stores/game.ts';
-import { useClientStore } from '@/stores/client.js';
+import { useClientStore } from '@/stores/client.ts';
 
 const gameStore = useGameStore();
 const clientStore = useClientStore();
