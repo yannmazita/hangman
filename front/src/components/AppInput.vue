@@ -1,6 +1,6 @@
 <template>
     <label v-if="label" class="label-text">{{ label }}</label>
-    <input :value="modelValue" @input="updateModelValue" v-bind="{ ...$attrs, ...classes }" />
+    <input v-model="model" v-bind="{ ...$attrs, ...classes }" />
 </template>
 <script setup lang="ts">
 import { computed } from 'vue';
@@ -8,13 +8,10 @@ import { computed } from 'vue';
 interface Props {
     label?: string | boolean;
     class?: string | boolean;
-    modelValue: string;
 }
 
+const model = defineModel();
 const props = defineProps<Props>();
-const emit = defineEmits<{
-    'update:modelValue': [value: string]
-}>();
 
 const classes = computed(() => {
     if (props.class) {
@@ -24,8 +21,4 @@ const classes = computed(() => {
         return { class: 'input input-bordered text-xl' };
     }
 })
-
-const updateModelValue = (e: Event) => {
-    emit('update:modelValue', (e.target as HTMLInputElement).value);
-}
 </script>
