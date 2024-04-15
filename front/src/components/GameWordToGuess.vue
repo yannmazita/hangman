@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useUserStore } from '@/stores/user.js';
+import { useUserStore } from '@/stores/user.ts';
 import { useGameStore } from '@/stores/game.ts';
 
 const userStore = useUserStore();
