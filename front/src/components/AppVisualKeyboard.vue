@@ -12,26 +12,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 
 interface Props {
+    keyboardKeys?: string[];
     hiddenKeys?: string[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
+    keyboardKeys: [
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+    ],
     hiddenKeys: []
 });
 const emit = defineEmits<{
     keyPress: [key: string]
 }>();
 
-const keyboardKeys = ref([
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
-]);
-
 const keyboardRows = computed(() => {
-    const visibleKeys = keyboardKeys.value.filter(key => !props.hiddenKeys.includes(key));
+    const visibleKeys = props.keyboardKeys.filter(key => !props.hiddenKeys.includes(key));
     const rows = [];
     for (let i = 0; i < Math.ceil(visibleKeys.length / 7); i++) {
         rows.push(visibleKeys.slice(i * 7, (i + 1) * 7));
