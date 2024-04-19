@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends, APIRouter
 
-from app.dependencies.players import (
+from app.players.dependencies import (
     get_own_player,
     create_new_player,
     get_players,
@@ -10,7 +10,7 @@ from app.dependencies.players import (
     remove_player,
     remove_own_player,
 )
-from app.models import Player, PlayerRead
+from app.players.models import Player, PlayerRead
 
 router = APIRouter(
     prefix="/players",

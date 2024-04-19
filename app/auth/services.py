@@ -7,7 +7,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
 from app.database import engine
-from app.models import User
+from app.users.models import User
 
 
 SECRET_KEY = os.getenv("SECRET_KEY")

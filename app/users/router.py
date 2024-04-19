@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends, APIRouter
 
-from app.dependencies.users import (
+from app.users.dependencies import (
     get_user,
     get_users,
     get_own_user,
@@ -10,7 +10,7 @@ from app.dependencies.users import (
     remove_user,
     remove_own_user,
 )
-from app.models import User, UserRead
+from app.users.models import User, UserRead
 
 router = APIRouter(
     prefix="/users",

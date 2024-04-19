@@ -6,15 +6,17 @@ from sqlmodel import Session, select
 from sqlalchemy.exc import NoResultFound
 
 from app.database import engine
-from app.dependencies.users import get_own_user
-from app.dependencies.tokens import validate_token
-from app.models import Player, PlayerCreate, TokenData, User
+from app.users.dependencies import get_own_user
+from app.auth.dependencies import validate_token
+from app.players.models import Player, PlayerCreate
+from app.auth.models import TokenData
+from app.users.models import User
 
 
 async def get_own_player(
     token_data: Annotated[
         TokenData, Security(validate_token, scopes=["user:own:player"])
-    ]
+    ],
 ) -> Player:
     with Session(engine) as session:
         try:
