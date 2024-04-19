@@ -9,9 +9,11 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import tokens, users, players, websockets
-from .database import create_db_and_tables
-from .models import create_fake_players, create_fake_users, create_admin_user
+from app.auth import router as auth_routes
+from app.clients import router as client_routes
+from app.users import router as user_routes
+from app.users.models import create_fake_users, create_admin_user
+from app.database import create_db_and_tables
 
 
 ORIGINS: list = json.loads(os.getenv("ORIGINS"))  # type: ignore
@@ -21,7 +23,6 @@ ORIGINS: list = json.loads(os.getenv("ORIGINS"))  # type: ignore
 async def lifespan(app: FastAPI):
     create_db_and_tables()
     create_admin_user()
-    create_fake_players()
     create_fake_users()
     yield
 
@@ -35,10 +36,9 @@ api.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-api.include_router(tokens.router)
-api.include_router(players.router)
-api.include_router(users.router)
-api.include_router(websockets.router)
+api.include_router(auth_routes.router)
+api.include_router(user_routes.router)
+api.include_router(client_routes.router)
 
 
 def start_server():
