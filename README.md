@@ -1,6 +1,6 @@
 # Hangman
 
-Hangman guessing game using VueJS and FastAPI.
+Mobile and desktop hangman guessing game using VueJS and FastAPI.
 
 On server startup a default administrator user is created with a default password and the OAuth scope "admin".
 
