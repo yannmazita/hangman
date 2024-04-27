@@ -2,9 +2,14 @@
 
 Hangman guessing game using VueJS and FastAPI.
 
+On server startup a default administrator user is created with a default password and the OAuth scope "admin".
+
 ## Installing
 
-If you only plan on running the Docker containers you can directly jump to [Running using Docker](#using-docker).
+If you only plan on running the Docker containers you can directly jump to [Running using Docker](#using-docker) after
+having [set up your environment variables](#environment).
+
+<img src="./docs/screen1-mobile.png" width="30%"></img> <img src="./docs/screen2-mobile.png" width="30%"></img> <img src="./docs/screen3-mobile.png" width="30%"></img>
 
 ### User interface
 
@@ -22,7 +27,20 @@ poetry install
 
 ## Running
 
+### Environment
+
+In `.env.example` :
+- `ALGORITHM` and `SECRET_KEY` keys are used to sign JWT tokens.
+- Change the value of `SECRET_KEY` to a randomly generated key using for example:
+```commandline
+openssl rand -hex 32
+```
+- `ORIGINS` and `VITE_API_URL` keys define respectively the URLs where the user interface and the API are accessible.
+
+
 ### Using Docker
+
+Attention, update `.env.example` with your environment variables. Do not change the file name.
 Both frontend and backend are dockerized. To start them, run in the project directory:
 ```commandline
 docker compose up -d [--build]
@@ -31,18 +49,12 @@ or
 ```commandline
 docker compose run -d [--build] <frontend | backend>
 ```
-The application is served to `localhost:5173` .
+The application is served to `localhost:5173` by default.
+The API documentation is available at `localhost:8000/docs` by default.
 
 ### From source
 
-#### Environment
-Create a `.env` file at the root of the cloned repository. See `.env.example` for an example.
-The `ALGORITHM` and `SECRET_KEY` keys are used to sign JWT tokens.
-Change the value of `SECRET_KEY` to a randomly generated key using for example:
-```commandline
-openssl rand -hex 32
-```
-`ORIGINS` and `VITE_API_URL` keys define respectively the URLs where the user interface and the API are accessible.
+Attention, copy `.env.example` to `.env` with your environment variables.
 
 #### User interface
 
@@ -50,8 +62,10 @@ Start the vite development server using:
 ```commandline
 npm run dev
 ```
+The application is served to `localhost:5173` by default.
 
 #### Application server
+
 Activate the virtual environment where the server is installed. For example using Poetry and in the project root:
 ```commandline
 poetry shell
@@ -61,15 +75,17 @@ Then run:
 uvicorn app.main:api --reload
 ```
 
+The API documentation is available at `localhost:8000/docs` by default.
+
 ## Details
 
 `Typescript`, `Vite`, `VueJS` frontend, served through `NGINX`. NGIX server running as frontend `Docker` service.
 `Python`, `FastAPI` backend, served through `uvicorn`. Uvicorn server running as backend Docker service.
 
 ## To do
-- Deployment: Clean up environment variable usage in dockerfile
-- User registration on client side
-- User data save on server side
+
+- Backend: User registration and save data
+- Backend: Local word cache instead of relying on online
+- Frontend: Actual hangman drawings (renders?)
+- Frontend: Give loading feedback to user
 - Highscore, feedback and settings pages
-- UX: Actual hangman drawings (renders?)
-- UX: Give loading feedback to user
