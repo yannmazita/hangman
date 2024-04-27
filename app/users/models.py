@@ -1,9 +1,7 @@
-from uuid import UUID, uuid4
-
-from sqlalchemy.exc import IntegrityError
-from sqlmodel import Field, Session, SQLModel
-
-from app.database import engine
+from uuid import UUID
+from pydantic import validate_call
+from sqlmodel import Field, SQLModel
+from app.auth.config import OAUTH_SCOPES
 
 
 class UserBase(SQLModel):
@@ -13,8 +11,7 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     id: UUID | None = Field(default=None, primary_key=True)
     hashed_password: str
-    banned: bool = Field(default=False)
-    roles: str = Field(default="user.create user:own user:own.write websockets")
+    roles: str = Field(default="")
 
 
 class UserCreate(UserBase):
@@ -23,41 +20,36 @@ class UserCreate(UserBase):
 
 class UserRead(UserBase):
     id: UUID
+    roles: str
 
 
-def create_fake_users():
-    user1: User = User(
-        id=uuid4(),
-        username="user1",
-        hashed_password="$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-    )
-    user2: User = User(
-        id=uuid4(),
-        username="user2",
-        hashed_password="$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-    )
-    db_user1 = User.model_validate(user1)
-    db_user2 = User.model_validate(user2)
-    session = Session(engine)
-    session.add(db_user1)
-    session.add(db_user2)
-    try:
-        session.commit()
-    except IntegrityError:
-        pass
+class UserRolesUpdate(SQLModel, table=False):
+    roles: str
+
+    @validate_call
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.validate_roles()
+
+    def validate_roles(self):
+        valid_roles = set(OAUTH_SCOPES.keys())
+        given_roles = set(self.roles.split())
+        if not given_roles.issubset(valid_roles):
+            raise ValueError(f"Invalid roles: {given_roles - valid_roles}")
 
 
-def create_admin_user():
-    user: User = User(
-        id=uuid4(),
-        username="admin",
-        hashed_password="$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-        roles="admin",
-    )
-    db_user = User.model_validate(user)
-    session = Session(engine)
-    session.add(db_user)
-    try:
-        session.commit()
-    except IntegrityError:
-        pass
+class UserPasswordUpdate(SQLModel, table=False):
+    old_password: str
+    new_password: str
+    confirm_password: str
+
+    @validate_call
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.validate_passwords()
+
+    def validate_passwords(self):
+        if self.new_password != self.confirm_password:
+            raise ValueError("Passwords do not match")
+        if self.old_password == self.new_password:
+            raise ValueError("New password is the same as the old password")

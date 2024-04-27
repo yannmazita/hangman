@@ -6,7 +6,9 @@ from jose import jwt
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
+from app.auth.exceptions import incorrect_username_or_password
 from app.database import engine
+from app.users.exceptions import user_not_found
 from app.users.models import User
 
 
@@ -29,9 +31,9 @@ def authenticate_user(username: str, password: str):
         session: Session = Session(engine)
         user = session.exec(select(User).where(User.username == username)).one()
     except NoResultFound:
-        return None
+        raise user_not_found
     if not verify_password(password, user.hashed_password):
-        return None
+        raise incorrect_username_or_password
     return user
 
 
@@ -42,5 +44,5 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)    #type: ignore
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)  # type: ignore
     return encoded_jwt
