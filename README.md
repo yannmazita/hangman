@@ -9,7 +9,7 @@ On server startup a default administrator user is created with a default passwor
 If you only plan on running the Docker containers you can directly jump to [Running using Docker](#using-docker) after
 having [set up your environment variables](#environment).
 
-<img src="./docs/screen1-mobile.png" width="30%"></img> <img src="./docs/screen2-mobile.png" width="30%"></img> <img src="./docs/screen3-mobile.png" width="30%"></img>
+<img src="./docs/screen-1-mobile.png" width="30%"></img> <img src="./docs/screen-2-mobile.png" width="30%"></img> <img src="./docs/screen-3-mobile.png" width="30%"></img>
 
 ### User interface
 
