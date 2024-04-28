@@ -346,33 +346,41 @@ class GameService(GameServiceBase):
         game.tries_left = Game.MAX_TRIES
         game.game_status = 0
 
-    async def start_game(self, player: Player) -> None:
+    async def start_game(self, player: Player) -> Game:
         """
         Starts a new game.
         Args:
             player: The player to start the game for.
+        Returns:
+            The game.
         """
         game: Game = self.ensure_game_exists(player)
         self.clear_game(player)
 
         await self.get_random_word(player)
         self.construct_word_progress(player)
+        return self.ensure_game_exists(player)
 
-    async def continue_game(self, player: Player) -> None:
+    async def continue_game(self, player: Player) -> Game:
         """
         Continues the game.
         Args:
             player: The player to continue the game for.
+        Returns:
+            The game.
         """
         self.clear_game(player)
         await self.start_game(player)
+        return self.ensure_game_exists(player)
 
-    def update_game_state(self, player: Player, character: str) -> None:
+    def update_game_state(self, player: Player, character: str) -> Game:
         """
         Updates the game state.
         Args:
             player: The player to update the game state for.
             character: The guessed character.
+        Returns:
+            The game.
         """
         game: Game = self.ensure_game_exists(player)
         if game.tries_left == 0:
@@ -380,3 +388,4 @@ class GameService(GameServiceBase):
         self.update_guessed_positions(player, character)
         self.update_guessed_letters(player, character)
         self.update_game_status(player)
+        return self.ensure_game_exists(player)
