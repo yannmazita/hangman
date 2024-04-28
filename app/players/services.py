@@ -339,12 +339,6 @@ class GameService(GameServiceBase):
         self.update_game(player, Game(guessed_letters=[]))
         self.update_game(player, Game(tries_left=MAX_TRIES))
         self.update_game(player, Game(game_status=0))
-        game.word_to_guess = ""
-        game.word_progress = ""
-        game.guessed_positions = []
-        game.guessed_letters = []
-        game.tries_left = Game.MAX_TRIES
-        game.game_status = 0
 
     async def start_game(self, player: Player) -> None:
         """
