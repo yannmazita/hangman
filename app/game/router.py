@@ -13,7 +13,7 @@ router = APIRouter(
 
 @router.get("/start", response_model=GameRead)
 async def start_game(
-    player_id: str,
+    player_id: Annotated[UUID, Depend(valid_player_id)],
     session: Annotated[Session, Depends(get_session)],
 ):
     game_service = GameService(session)
