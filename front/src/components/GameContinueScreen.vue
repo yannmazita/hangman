@@ -21,7 +21,7 @@ const userStore = useUserStore();
 const menuStore = useMenuStore();
 const gameStore = useGameStore();
 const { game } = storeToRefs(useGameStore());
-const showModal = ref<boolean>(false);
+const showModal: Ref<boolean> = ref(false);
 const message: Ref<string> = ref("");
 
 const gameStatus = computed(() => {
