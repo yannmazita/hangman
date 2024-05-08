@@ -13,6 +13,8 @@ from app.auth import router as auth_routes
 from app.clients import router as client_routes
 from app.users import router as user_routes
 from app.users.utils import create_superuser
+from app.game import router as game_routes
+from app.players import router as player_routes
 from app.database import create_db_and_tables
 
 
@@ -38,6 +40,8 @@ api.add_middleware(
 api.include_router(auth_routes.router)
 api.include_router(client_routes.router)
 api.include_router(user_routes.router)
+api.include_router(game_routes.router)
+api.include_router(player_routes.router)
 
 
 def start_server():

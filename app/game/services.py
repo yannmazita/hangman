@@ -184,6 +184,8 @@ class GameServiceBase:
     def ensure_game_exists(self, player: Player) -> Game:
         """
         Ensures a game exists.
+
+        This method checks if a game exists for a player. If not, it creates a new game.
         Args:
             player: The player to ensure the game for.
         Returns:
@@ -343,7 +345,7 @@ class GameService(GameServiceBase):
         game.word_progress = ""
         game.guessed_positions = []
         game.guessed_letters = []
-        game.tries_left = Game.MAX_TRIES
+        game.tries_left = MAX_TRIES
         game.game_status = 0
 
     async def start_game(self, player: Player) -> Game:

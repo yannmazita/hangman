@@ -1,5 +1,5 @@
 from uuid import uuid4
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from app.players.exceptions import (
     player_not_found,
@@ -63,14 +63,14 @@ class PlayerServiceBase:
             raise multiple_players_found
 
     def update_player_by_attribute(
-        self, attribute: PlayerAttribute, value: str, player: Player
+        self, attribute: PlayerAttribute, value: str, player: PlayerCreate
     ) -> Player:
         """
         Update a player by a specified attribute.
         Args:
             attribute: The attribute to filter by.
             value: The value to filter by.
-            player: The player data.
+            player: The new player data.
         Returns:
             The updated player.
         """
@@ -133,10 +133,12 @@ class PlayerServiceBase:
             offset: The number of records to skip.
             limit: The maximum number of records to return.
         Returns:
-            A list of players.
+            A tuple containing the list of players and the total number of players.
         """
+        total_count_statement = select(func.count()).select_from(Player)
+        total_count: int = self.session.exec(total_count_statement).one()
         players = self.session.exec(select(Player).offset(offset).limit(limit)).all()
-        return players
+        return players, total_count
 
 
 class PlayerService(PlayerServiceBase):

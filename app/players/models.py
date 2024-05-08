@@ -1,4 +1,5 @@
 from uuid import UUID
+from pydantic import validate_call
 from sqlmodel import Field, SQLModel
 
 
@@ -20,3 +21,18 @@ class PlayerCreate(PlayerBase):
 
 class PlayerRead(PlayerBase):
     id: UUID
+
+class PlayerPlayernameUpdate(SQLModel, table=False):
+    username: str
+
+    @validate_call
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.validate_username()
+
+    def validate_username(self):
+        # add these constants to local config.py
+        if len(self.username) < 3:
+            raise ValueError("Playername must be at least 3 characters")
+        if len(self.username) > 50:
+            raise ValueError("Playername must be at most 50 characters")
