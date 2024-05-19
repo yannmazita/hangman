@@ -1,17 +1,17 @@
-import os
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from jose import JWTError, jwt
 from pydantic import ValidationError
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies import get_user_by_username
 from app.auth.config import OAUTH_SCOPES
 from app.auth.models import TokenData
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
+from app.config import settings
+from app.database import get_session
+from app.users.schemas import UserAttribute
+from app.users.services import UserService
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="login",
@@ -21,12 +21,15 @@ oauth2_scheme = OAuth2PasswordBearer(
 
 
 async def validate_token(
-    security_scopes: SecurityScopes, token: Annotated[str, Depends(oauth2_scheme)]
+    security_scopes: SecurityScopes,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    session: Annotated[AsyncSession, Depends(get_session)],
 ) -> TokenData:
     """Validate token and check if it has the required scopes.
     Args:
         security_scopes: Scopes required by the dependent.
         token: Token to validate.
+        session: Database session.
     Returns:
         A TokenData instance representing the token data.
     """
@@ -47,7 +50,9 @@ async def validate_token(
     )
 
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token, settings.secret_key, algorithms=[settings.algorithm]
+        )
         username = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -58,7 +63,10 @@ async def validate_token(
 
     try:
         assert token_data.username is not None
-        user = await get_user_by_username(token_data.username)
+        service = UserService(session)
+        user = await service.get_user_by_attribute(
+            UserAttribute.USERNAME, token_data.username
+        )
         user_scopes: list[str] = user.roles.split(" ")
         # Allow admin users to act as if they have any scope
         if "admin" in user_scopes:

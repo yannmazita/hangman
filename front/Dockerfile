@@ -1,6 +1,6 @@
-### First stage ###
+### Base node stage ###
 
-FROM node:21-alpine as node-base
+FROM node:21-alpine as base
 
 RUN adduser -h /home/appuser -D appuser
 
@@ -8,31 +8,29 @@ WORKDIR /application
 RUN chown -R appuser:appuser /application
 
 
-### Second stage ###
+### Development and build stage ###
 
 # Copy vite project files
-FROM node-base as node-builder
-COPY front/public /application/front/public
-COPY front/src /application/front/src
-COPY front/package.json front/postcss.config.js front/tailwind.config.js front/tsconfig.json \
-    front/tsconfig.node.json front/vite.config.ts front/index.html \
-    front/
+FROM base as builder
+COPY public /application/public
+COPY src /application/src
+COPY package.json postcss.config.js tailwind.config.js tsconfig.json \
+    tsconfig.node.json vite.config.ts index.html \
+    ./
 
-################### This needs to be cleaned up
-COPY .env.example /application/
-################### This needs to be cleaned up
+# Install dependencies
+RUN npm install
 
-# Install dependencies, build application
-WORKDIR /application/front
-RUN mv ../.env.example ../.env && npm install && npm run build
+# Optionally build for production
+ARG BUILD_PRODUCTION
+RUN if [ "$BUILD_PRODUCTION" = "true" ]; then npm run build; fi
 
+### Production Nginx stage ###
 
-### Final stage ###
-
-FROM nginx:alpine as production-build
-COPY front/nginx.conf /etc/nginx/nginx.conf
+FROM nginx:alpine as production
+COPY nginx.conf /etc/nginx/nginx.conf
 RUN rm -rf /usr/share/nginx/html/*
-COPY --from=node-builder /application/front/dist /usr/share/nginx/html/front
+COPY --from=builder /application/dist /usr/share/nginx/html/front
 EXPOSE 5173
 
 CMD ["nginx", "-g", "daemon off;"]

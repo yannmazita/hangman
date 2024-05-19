@@ -1,19 +1,29 @@
 import asyncio
+import logging
+
 import requests
-from uuid import uuid4
 from fastapi import HTTPException, status
-from sqlmodel import Session, select
-from sqlalchemy.exc import MultipleResultsFound, NoResultFound
-from app.game.config import MAX_WORD_LENGTH, MAX_TRIES
+from sqlalchemy.exc import (
+    IntegrityError,
+    MultipleResultsFound,
+    NoResultFound,
+    SQLAlchemyError,
+)
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import func, select
+
+from app.game.config import MAX_TRIES, MAX_WORD_LENGTH
 from app.game.exceptions import (
+    GameOver,
     game_already_exists,
     game_not_found,
     multiple_games_found,
-    GameOver,
 )
 from app.game.models import Game
 from app.game.schemas import GameAttribute
 from app.players.models import Player
+
+logger = logging.getLogger(__name__)
 
 
 class GameServiceBase:
@@ -24,10 +34,10 @@ class GameServiceBase:
         session: The database session.
     """
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    def create_new_game(self, player: Player) -> Game:
+    async def create_new_game(self, player: Player) -> Game:
         """
         Creates a new game.
         Args:
@@ -36,152 +46,208 @@ class GameServiceBase:
             The created game.
         """
         try:
-            self.session.exec(select(Game).where(Game.player_id == player.id)).one()
-            raise game_already_exists
-        except NoResultFound:
-            pass
+            logger.debug(f"Attempting to create game for player: {player.id}")
+            query = select(Game).where(Game.player_id == player.id)
+            response = await self.session.execute(query)
+            existing_game: Game | None = response.scalar_one_or_none()
 
-        new_game = Game(
-            player_id=player.id,
-        )
-        db_game = Game.model_validate(new_game)
-        self.session.add(db_game)
-        self.session.commit()
-        self.session.refresh(db_game)
+            if existing_game:
+                logger.warning(f"Game already exists for player: {player.id}")
+                raise game_already_exists
 
-        return db_game
+            new_game = Game(
+                player_id=player.id,
+            )
+            db_game = Game.model_validate(new_game)
 
-    def get_game(self, player: Player) -> Game:
+            logger.debug(f"Adding new game to session: {db_game}")
+            self.session.add(db_game)
+
+            logger.debug("Committing session")
+            await self.session.commit()
+
+            logger.debug("Refreshing session")
+            await self.session.refresh(db_game)
+
+            logger.info(f"Game created successfully for player: {db_game.player_id}")
+            return db_game
+
+        except IntegrityError as e:
+            logger.error(f"IntegrityError occurred: {e}", exc_info=False)
+            raise e
+        except SQLAlchemyError as e:
+            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
+            raise e
+        except HTTPException as e:
+            logger.error(f"HTTPException occurred: {e}", exc_info=False)
+            raise e
+        except Exception as e:
+            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
+            raise e
+
+    async def get_game_by_attribute(self, attribute: GameAttribute, value: str) -> Game:
         """
-        Retrieve a player's game from the database.
-
-        Args:
-            player: The player to get the game for.
-        Returns:
-            The game.
-        """
-        try:
-            game = self.session.exec(
-                select(Game).where(Game.player_id == player.id)
-            ).one()
-            return game
-        except NoResultFound:
-            raise game_not_found
-        except MultipleResultsFound:
-            raise multiple_games_found
-
-    def get_game_by_attribute(self, attribute: GameAttribute, value: str) -> Game:
-        """
-        Gets a game by a specified attribute.
+        Get a game by a specified attribute.
         Args:
             attribute: The attribute to filter by.
-            value: The value of the attribute.
+            value: The value to filter by.
         Returns:
-            The game.
+            The game with the specified attribute and value.
         """
         try:
-            game = self.session.exec(
-                select(Game).where(getattr(Game, attribute.value) == value)
-            ).one()
+            logger.debug(f"Attempting to get game by {attribute.value}: {value}")
+            query = select(Game).where(getattr(Game, attribute.value) == value)
+            response = await self.session.execute(query)
+            game = response.scalar_one()
+            logger.info(f"Game found: {game.id}")
+            return game
         except MultipleResultsFound:
+            logger.error(
+                f"Multiple games found for {attribute.value} = {value}", exc_info=False
+            )
             raise multiple_games_found
         except NoResultFound:
+            logger.warning(
+                f"No game found for {attribute.value} = {value}", exc_info=False
+            )
             raise game_not_found
-        return game
+        except SQLAlchemyError as e:
+            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
+            raise e
+        except Exception as e:
+            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
+            raise e
 
-    def update_game(self, player: Player, game: Game) -> Game:
-        """
-        Update a player's game in the database.
-
-        Args:
-            player: The player to update the game for.
-            game: The updated player game.
-        Returns:
-            The updated game.
-        """
-        try:
-            db_game = self.get_game(player)
-            game_data = game.model_dump()
-            for key, value in game_data.items():
-                setattr(db_game, key, value)
-            self.session.add(db_game)
-            self.session.commit()
-            self.session.refresh(db_game)
-        except NoResultFound:
-            raise game_not_found
-        except MultipleResultsFound:
-            raise multiple_games_found
-
-        return db_game
-
-    def update_game_by_attribute(
+    async def update_game_by_attribute(
         self, attribute: GameAttribute, value: str, game: Game
     ) -> Game:
         """
-        Updates a game by a specified attribute.
+        Update a user using a specified attribute.
         Args:
             attribute: The attribute to filter by.
-            value: The value of the attribute.
-            game: The game to update.
+            value: The value to filter by.
+            game: The new game data.
         Returns:
-            The updated game.
+            The updated user.
         """
         try:
-            game_db = self.get_game_by_attribute(attribute, value)
+            logger.debug(f"Attempting to update game by {attribute.value}: {value}")
+            game_db = await self.get_game_by_attribute(attribute, value)
             game_data = game.model_dump()
             for key, value in game_data.items():
                 setattr(game_db, key, value)
             self.session.add(game_db)
-            self.session.commit()
-            self.session.refresh(game_db)
+            await self.session.commit()
+            await self.session.refresh(game_db)
+            logger.info(f"Game updated successfully: {game_db.id}")
+            return game_db
         except NoResultFound:
+            logger.warning(
+                f"No game found for {attribute.value} = {value}", exc_info=False
+            )
             raise game_not_found
         except MultipleResultsFound:
+            logger.error(
+                f"Multiple games found for {attribute.value} = {value}", exc_info=False
+            )
             raise multiple_games_found
+        except SQLAlchemyError as e:
+            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
+            raise e
+        except Exception as e:
+            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
+            raise e
 
-        return game_db
-
-    def delete_game(self, game: Game) -> None:
+    async def delete_game(self, game: Game) -> Game:
         """
-        Deletes a game.
+        Delete a game.
         Args:
             game: The game to delete.
+        Returns:
+            The deleted game.
         """
         try:
-            self.session.delete(game)
-            self.session.commit()
+            logger.debug(f"Attempting to delete game: {game.id}")
+            await self.session.delete(game)
+            await self.session.commit()
+            logger.info(f"User deleted successfully: {game.id}")
+            return game
         except NoResultFound:
+            logger.warning(f"No game found to delete: {game.id}", exc_info=False)
             raise game_not_found
+        except SQLAlchemyError as e:
+            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
+            raise e
+        except Exception as e:
+            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
+            raise e
 
-    def delete_game_by_attribute(self, attribute: GameAttribute, value: str) -> None:
+    async def delete_game_by_attribute(
+        self, attribute: GameAttribute, value: str
+    ) -> Game:
         """
-        Deletes a game by a specified attribute.
+        Delete a game using a specified attribute.
         Args:
             attribute: The attribute to filter by.
-            value: The value of the attribute.
+            value: The value to filter by.
+        Returns:
+            The deleted game.
         """
         try:
-            game = self.get_game_by_attribute(attribute, value)
-            self.session.delete(game)
-            self.session.commit()
+            logger.debug(f"Attempting to delete game by {attribute.value}: {value}")
+            game = await self.get_game_by_attribute(attribute, value)
+            await self.session.delete(game)
+            await self.session.commit()
+            logger.info(f"Game deleted successfully: {game.id}")
+            return game
         except NoResultFound:
+            logger.warning(
+                f"No game found for {attribute.value} = {value}", exc_info=False
+            )
             raise game_not_found
         except MultipleResultsFound:
+            logger.error(
+                f"Multiple games found for {attribute.value} = {value}", exc_info=False
+            )
             raise multiple_games_found
+        except SQLAlchemyError as e:
+            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
+            raise e
+        except Exception as e:
+            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
+            raise e
 
-    def get_games(self, offset: int = 0, limit: int = 100):
+    async def get_games(self, offset: int = 0, limit: int = 100):
         """
-        Gets all games.
+        Get all games.
         Args:
-            offset: The offset.
-            limit: The limit.
+            offset: The number of users to skip.
+            limit: The maximum number of users to return.
         Returns:
-            The games.
+            The list of games.
         """
-        games = self.session.exec(select(Game).offset(offset).limit(limit)).all()
-        return games
+        try:
+            logger.debug(f"Fetching games with offset: {offset}, limit: {limit}")
+            total_count_query = select(func.count()).select_from(Game)
+            total_count_response = await self.session.execute(total_count_query)
+            total_count: int = total_count_response.scalar_one()
 
-    def ensure_game_exists(self, player: Player) -> Game:
+            games_query = select(Game).offset(offset).limit(limit)
+            games_response = await self.session.execute(games_query)
+            games = games_response.scalars().all()
+            logger.info(f"Fetched {len(games)} games")
+            return games, total_count
+        except NoResultFound:
+            logger.warning("No games found", exc_info=False)
+            raise game_not_found
+        except SQLAlchemyError as e:
+            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
+            raise e
+        except Exception as e:
+            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
+            raise e
+
+    async def ensure_game_exists(self, player: Player) -> Game:
         """
         Ensures a game exists.
 
@@ -192,10 +258,12 @@ class GameServiceBase:
             The game.
         """
         try:
-            game = self.get_game(player)
+            game = await self.get_game_by_attribute(
+                GameAttribute.PLAYER_ID, str(player.id)
+            )
         except HTTPException as e:
             if e.status_code == status.HTTP_404_NOT_FOUND:
-                game = self.create_new_game(player)
+                game = await self.create_new_game(player)
             else:
                 raise e
         return game
@@ -209,7 +277,7 @@ class GameService(GameServiceBase):
         session: The database session.
     """
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         super().__init__(session)
 
     async def get_random_word(self, player: Player) -> None:
@@ -237,10 +305,12 @@ class GameService(GameServiceBase):
                 "computer"  # very quick fix, need to integrate local word source
             )
 
-        game: Game = self.ensure_game_exists(player)
-        self.update_game(player, Game(word_to_guess=word_to_guess))
+        game: Game = await self.ensure_game_exists(player)
+        await self.update_game_by_attribute(
+            GameAttribute.PLAYER_ID, str(player.id), Game(word_to_guess=word_to_guess)
+        )
 
-    def construct_word_progress(self, player: Player) -> None:
+    async def construct_word_progress(self, player: Player) -> None:
         """
         Contructs the word in its current state of discovery.
 
@@ -250,19 +320,27 @@ class GameService(GameServiceBase):
             player: The player to construct the word progress for.
         """
 
-        game: Game = self.ensure_game_exists(player)
+        game: Game = await self.ensure_game_exists(player)
 
         if not game.word_progress:
             word_progress = "*" * len(game.word_to_guess)
-            self.update_game(player, Game(word_progress=word_progress))
+            await self.update_game_by_attribute(
+                GameAttribute.PLAYER_ID,
+                str(player.id),
+                Game(word_progress=word_progress),
+            )
         else:
             word_progress_split: list[str] = list(game.word_progress)
             for pos in game.guessed_positions:
                 word_progress_split[pos] = game.word_to_guess[pos]
             word_progress = "".join(word_progress_split)
-            self.update_game(player, Game(word_progress=word_progress))
+            await self.update_game_by_attribute(
+                GameAttribute.PLAYER_ID,
+                str(player.id),
+                Game(word_progress=word_progress),
+            )
 
-    def update_guessed_positions(self, player: Player, character: str) -> None:
+    async def update_guessed_positions(self, player: Player, character: str) -> None:
         """
         Updates the positions of guessed characters.
 
@@ -274,22 +352,28 @@ class GameService(GameServiceBase):
             character: The guessed character.
         """
 
-        game: Game = self.ensure_game_exists(player)
+        game: Game = await self.ensure_game_exists(player)
         guessed_positions = game.guessed_positions
         guessed_corretly: bool = False
 
         for pos, car in enumerate(game.word_to_guess):
             if character == car:
                 guessed_positions.append(pos)
-                self.update_game(player, Game(guessed_positions=guessed_positions))
+                await self.update_game_by_attribute(
+                    GameAttribute.PLAYER_ID,
+                    str(player.id),
+                    Game(guessed_positions=guessed_positions),
+                )
                 guessed_corretly = True
-        self.construct_word_progress(player)
+        await self.construct_word_progress(player)
 
         if not guessed_corretly:
             tries_left = game.tries_left
-            self.update_game(player, Game(tries_left=tries_left - 1))
+            await self.update_game_by_attribute(
+                GameAttribute.PLAYER_ID, str(player.id), Game(tries_left=tries_left - 1)
+            )
 
-    def update_guessed_letters(self, player: Player, character: str) -> None:
+    async def update_guessed_letters(self, player: Player, character: str) -> None:
         """
         Updates the guessed letters list.
 
@@ -300,13 +384,17 @@ class GameService(GameServiceBase):
             player: The player to update the guessed letters for.
             character: The guessed character.
         """
-        game: Game = self.ensure_game_exists(player)
+        game: Game = await self.ensure_game_exists(player)
         if character not in game.guessed_letters:
             guessed_letters = game.guessed_letters
             guessed_letters.append(character)
-            self.update_game(player, Game(guessed_letters=guessed_letters))
+            await self.update_game_by_attribute(
+                GameAttribute.PLAYER_ID,
+                str(player.id),
+                Game(guessed_letters=guessed_letters),
+            )
 
-    def update_game_status(self, player: Player) -> None:
+    async def update_game_status(self, player: Player) -> None:
         """
         Updates the game status.
 
@@ -314,39 +402,47 @@ class GameService(GameServiceBase):
             player: The player to update the game status for.
         """
 
-        game: Game = self.ensure_game_exists(player)
+        game: Game = await self.ensure_game_exists(player)
 
         if game.game_status == 0:
             if game.tries_left == 0:
-                self.update_game(player, Game(game_status=-1))
+                await self.update_game_by_attribute(
+                    GameAttribute.PLAYER_ID, str(player.id), Game(game_status=-1)
+                )
             elif game.word_to_guess == game.word_progress:
-                self.update_game(player, Game(game_status=1))
+                await self.update_game_by_attribute(
+                    GameAttribute.PLAYER_ID, str(player.id), Game(game_status=1)
+                )
                 successful_guesses = game.successful_guesses
-                self.update_game(
-                    player, Game(successful_guesses=successful_guesses + 1)
+                await self.update_game_by_attribute(
+                    GameAttribute.PLAYER_ID,
+                    str(player.id),
+                    Game(successful_guesses=successful_guesses + 1),
                 )
             else:
-                self.update_game(player, Game(game_status=0))
+                await self.update_game_by_attribute(
+                    GameAttribute.PLAYER_ID, str(player.id), Game(game_status=0)
+                )
 
-    def clear_game(self, player: Player) -> None:
+    async def clear_game(self, player: Player) -> None:
         """
         Clears the game.
         Args:
             player: The player to clear the game for.
         """
-        game: Game = self.ensure_game_exists(player)
-        self.update_game(player, Game(word_to_guess=""))
-        self.update_game(player, Game(word_progress=""))
-        self.update_game(player, Game(guessed_positions=[]))
-        self.update_game(player, Game(guessed_letters=[]))
-        self.update_game(player, Game(tries_left=MAX_TRIES))
-        self.update_game(player, Game(game_status=0))
-        game.word_to_guess = ""
-        game.word_progress = ""
-        game.guessed_positions = []
-        game.guessed_letters = []
-        game.tries_left = MAX_TRIES
-        game.game_status = 0
+        await self.ensure_game_exists(player)
+
+        clean_game = Game(
+            word_to_guess="",
+            word_progress="",
+            guessed_positions=[],
+            guessed_letters=[],
+            tries_left=MAX_TRIES,
+            game_status=0,
+        )
+        await self.update_game_by_attribute(
+            GameAttribute.PLAYER_ID, str(player.id), clean_game
+        )
 
     async def start_game(self, player: Player) -> Game:
         """
@@ -356,12 +452,13 @@ class GameService(GameServiceBase):
         Returns:
             The game.
         """
-        game: Game = self.ensure_game_exists(player)
-        self.clear_game(player)
+        await self.ensure_game_exists(player)
+        await self.clear_game(player)
 
         await self.get_random_word(player)
-        self.construct_word_progress(player)
-        return self.ensure_game_exists(player)
+        await self.construct_word_progress(player)
+        game: Game = await self.ensure_game_exists(player)
+        return game
 
     async def continue_game(self, player: Player) -> Game:
         """
@@ -371,11 +468,12 @@ class GameService(GameServiceBase):
         Returns:
             The game.
         """
-        self.clear_game(player)
+        await self.clear_game(player)
         await self.start_game(player)
-        return self.ensure_game_exists(player)
+        game: Game = await self.ensure_game_exists(player)
+        return game
 
-    def update_game_state(self, player: Player, character: str) -> Game:
+    async def update_game_state(self, player: Player, character: str) -> Game:
         """
         Updates the game state.
         Args:
@@ -384,10 +482,11 @@ class GameService(GameServiceBase):
         Returns:
             The game.
         """
-        game: Game = self.ensure_game_exists(player)
+        game: Game = await self.ensure_game_exists(player)
         if game.tries_left == 0:
             raise GameOver(player.id)
-        self.update_guessed_positions(player, character)
-        self.update_guessed_letters(player, character)
-        self.update_game_status(player)
-        return self.ensure_game_exists(player)
+        await self.update_guessed_positions(player, character)
+        await self.update_guessed_letters(player, character)
+        await self.update_game_status(player)
+        game: Game = await self.ensure_game_exists(player)
+        return game

@@ -1,14 +1,127 @@
-version: '3'
+x-postgres-base: &postgres-base
+  image: postgres:16.3-alpine
+  restart: always
+  healthcheck:
+    test:
+      - CMD-SHELL
+      - pg_isready -U postgres
+    interval: 10s
+    timeout: 5s
+    retries: 5
+
+x-backend-base: &backend-base
+  build:
+    context: ./app
+  restart: always
+
+x-frontend-base: &frontend-base
+  restart: always
+
 services:
-  frontend:
-    build:
-      context: ./
-      dockerfile: front/Dockerfile
+  postgres-dev:
+    profiles: ["dev"]
+    <<: *postgres-base
+    env_file: "./.env"
+    environment:
+      - POSTGRES_HOST=postgres-dev
     ports:
-      - "5173:5173"
-  backend:
-    build:
-      context: ./
-      dockerfile: app/Dockerfile
+      - 5432:5432
+    expose:
+      - 5432
+    volumes:
+      - ./postgres/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
+      - pgdata-dev:/var/lib/postgresql/data
+    networks:
+      - dev
+  postgres-prod:
+    profiles: ["prod"]
+    <<: *postgres-base
+    env_file: "./.env"
+    environment:
+      - POSTGRES_HOST=postgres-prod
     ports:
-      - "8000:8000"
+      - 5433:5432
+    expose:
+      - 5432
+    volumes:
+      - pgdata-prod:/var/lib/postgresql/data
+    networks:
+      - prod
+
+  backend-dev:
+    profiles: ["dev"]
+    <<: *backend-base
+    build:
+      context: ./app
+      target: builder
+    command: /.poetry-venv/bin/poetry run python -m app.main
+    env_file: "./.env"
+    environment:
+     - POSTGRES_HOST=postgres-dev
+    ports:
+      - 8000:8000
+    expose:
+      - 8000
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+    networks:
+      - dev
+  backend-prod:
+    profiles: ["prod"]
+    <<: *backend-base
+    build:
+      context: ./app
+      target: production
+      args:
+        BUILD_PRODUCTION: "true"
+    env_file: "./.env"
+    environment:
+      - POSTGRES_HOST=postgres-prod
+    ports:
+      - 8000:8000
+    expose:
+      - 8000
+    depends_on:
+      postgres-prod:
+        condition: service_healthy
+    networks:
+      - prod
+
+  frontend-dev:
+    profiles: ["dev"]
+    <<: *frontend-base
+    build:
+      context: ./front
+      target: builder
+    command: npm run host --reload
+    env_file: "./.env"
+    ports:
+      - 5173:5173
+    expose:
+      - 5173
+    networks:
+      - dev
+  frontend-prod:
+    profiles: ["prod"]
+    <<: *frontend-base
+    build:
+      context: ./front
+      target: production
+      args:
+        BUILD_PRODUCTION: "true"
+    env_file: "./.env"
+    ports:
+      - 80:80
+    expose:
+      - 80
+    networks:
+      - prod
+
+volumes:
+  pgdata-dev:
+  pgdata-prod:
+
+networks:
+  dev:
+  prod:

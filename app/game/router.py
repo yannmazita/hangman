@@ -1,7 +1,9 @@
 from typing import Annotated
 from uuid import UUID
-from fastapi import Depends, APIRouter
-from sqlmodel import Session
+
+from fastapi import APIRouter, Depends, HTTPException, Security, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_session
 from app.game.models import GameRead
 from app.game.services import GameService
@@ -14,8 +16,8 @@ router = APIRouter(
 
 @router.get("/start", response_model=GameRead)
 async def start_game(
-    #player_id: Annotated[UUID, Depends(valid_player_id)],
+    # player_id: Annotated[UUID, Depends(valid_player_id)],
     player_id: Annotated[UUID, Depends()],
-    session: Annotated[Session, Depends(get_session)],
+    session: Annotated[AsyncSession, Depends(get_session)],
 ):
-    game_service = GameService(session)
+    service = GameService(session)
