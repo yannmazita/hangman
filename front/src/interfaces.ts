@@ -3,14 +3,15 @@ export interface TokenData {
     token_type: string | null,
 }
 
-export interface User {
-    id: string | null,
-    username: string | null,
-    player_id: string | null,
+export interface UserCreate {
+    username: string,
+    password: string,
 }
 
-export interface ServerStats {
-    active_players: number,
+export interface User {
+    id: string,
+    username: string,
+    roles: string,
 }
 
 export interface Player {
@@ -29,4 +30,8 @@ export interface Game {
     max_tries: number,
     successful_guesses: number,
     game_status: number,
+}
+
+export interface ServerStats {
+    active_users: number,
 }

@@ -1,6 +1,7 @@
 from typing import Annotated
 
-from fastapi import Depends, Security
+from fastapi import Depends, Security, status
+from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import validate_token
@@ -28,7 +29,12 @@ async def get_own_player(
         player = await service.get_player_by_attribute(
             PlayerAttribute.USERNAME, token_data.playername
         )
-    except Exception as e:
+    except HTTPException as e:
         raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
 
     return player

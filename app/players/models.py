@@ -21,6 +21,10 @@ class PlayerCreate(PlayerBase):
 
 class PlayerRead(PlayerBase):
     id: UUID
+    points: int = 0
+    games_played: int = 0
+    games_won: int = 0
+
 
 class PlayerPlayernameUpdate(SQLModel, table=False):
     username: str
