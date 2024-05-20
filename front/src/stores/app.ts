@@ -90,7 +90,7 @@ export const useAppStore = defineStore('app', () => {
 
         try {
             const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/start/`,
-                player,
+                { "player_id": player.id },
                 {
                     headers: {
                         accept: 'application/json',

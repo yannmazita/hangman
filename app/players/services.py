@@ -139,7 +139,8 @@ class PlayerServiceBase:
             player_db = await self.get_player_by_attribute(attribute, value)
             player_data = player.model_dump()
             for key, value in player_data.items():
-                setattr(player_db, key, value)
+                if key != "id":
+                    setattr(player_db, key, value)
             self.session.add(player_db)
             await self.session.commit()
             await self.session.refresh(player_db)

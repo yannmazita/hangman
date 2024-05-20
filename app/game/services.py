@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import requests
 from fastapi import HTTPException, status
@@ -59,6 +59,7 @@ class GameServiceBase:
                 raise game_already_exists
 
             new_game = Game(
+                id=uuid4(),
                 player_id=player.id,
             )
             db_game = Game.model_validate(new_game)
@@ -135,12 +136,16 @@ class GameServiceBase:
         """
         try:
             logger.debug(f"Attempting to update game by {attribute.value}: {value}")
-            game_db = await self.get_game_by_attribute(attribute, value)
+            game_db: Game = await self.get_game_by_attribute(attribute, value)
             game_data = game.model_dump()
             for key, value in game_data.items():
-                setattr(game_db, key, value)
+                if key != "id":
+                    setattr(game_db, key, value)
+            logger.debug(f"Updating game: {game_db.id}")
             self.session.add(game_db)
+            logger.debug("Committing session")
             await self.session.commit()
+            logger.debug("Refreshing session")
             await self.session.refresh(game_db)
             logger.info(f"Game updated successfully: {game_db.id}")
             return game_db
@@ -295,23 +300,29 @@ class GameService(GameServiceBase):
         word_to_guess: str = ""
 
         try:
+            logger.debug("Attempting to get random word")
             response = await asyncio.to_thread(
                 requests.get, "https://random-word-api.herokuapp.com/word?number=1"
             )
             while len(response.json()[0]) > MAX_WORD_LENGTH:
+                logger.debug("Word too long, retrying")
                 response = await asyncio.to_thread(
                     requests.get, "https://random-word-api.herokuapp.com/word?number=1"
                 )
             word_to_guess = response.json()[0]
+            logger.info(f"Random word fetched: {word_to_guess}")
         except requests.exceptions.ConnectionError as e:
+            logger.error(f"Error fetching random word: {e}", exc_info=False)
             word_to_guess = (
                 "computer"  # very quick fix, need to integrate local word source
             )
+            logger.warning(f"Using default word: {word_to_guess}")
 
         game: Game = await self.ensure_game_exists(player)
         await self.update_game_by_attribute(
             GameAttribute.PLAYER_ID, str(player.id), Game(word_to_guess=word_to_guess)
         )
+        logger.debug(f"Word saved to game: {game.id}")
 
     async def construct_word_progress(self, player: Player) -> None:
         """
@@ -326,6 +337,7 @@ class GameService(GameServiceBase):
         game: Game = await self.ensure_game_exists(player)
 
         if not game.word_progress:
+            logger.debug("Initializing word progress")
             word_progress = "*" * len(game.word_to_guess)
             await self.update_game_by_attribute(
                 GameAttribute.PLAYER_ID,
@@ -333,6 +345,7 @@ class GameService(GameServiceBase):
                 Game(word_progress=word_progress),
             )
         else:
+            logger.debug("Updating word progress")
             word_progress_split: list[str] = list(game.word_progress)
             for pos in game.guessed_positions:
                 word_progress_split[pos] = game.word_to_guess[pos]
@@ -342,6 +355,7 @@ class GameService(GameServiceBase):
                 str(player.id),
                 Game(word_progress=word_progress),
             )
+        logger.debug(f"Word progress updated: {game.word_progress}")
 
     async def update_guessed_positions(self, player: Player, character: str) -> None:
         """
@@ -359,6 +373,7 @@ class GameService(GameServiceBase):
         guessed_positions = game.guessed_positions
         guessed_corretly: bool = False
 
+        logger.debug(f"Updating guessed positions for character: {character}")
         for pos, car in enumerate(game.word_to_guess):
             if character == car:
                 guessed_positions.append(pos)
@@ -368,13 +383,16 @@ class GameService(GameServiceBase):
                     Game(guessed_positions=guessed_positions),
                 )
                 guessed_corretly = True
+        logger.debug(f"Guessed positions updated: {game.guessed_positions}")
         await self.construct_word_progress(player)
 
         if not guessed_corretly:
+            logger.debug("Character not found in word")
             tries_left = game.tries_left
             await self.update_game_by_attribute(
                 GameAttribute.PLAYER_ID, str(player.id), Game(tries_left=tries_left - 1)
             )
+        logger.debug(f"Tries left updated: {game.tries_left}")
 
     async def update_guessed_letters(self, player: Player, character: str) -> None:
         """

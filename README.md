@@ -86,6 +86,7 @@ Attention: when directly spinning up backend services you have to copy `pyprojec
 
 ## To do
 
+- Unit tests
 - Backend: User registration and save data
 - Backend: Local word cache instead of relying on online
 - Frontend: Actual hangman drawings (renders?)
