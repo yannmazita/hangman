@@ -139,6 +139,10 @@ dist
 .svelte-kit
 
 ### Python ###
+# Duplicate files
+app/pyproject.toml
+app/poetry.lock
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
