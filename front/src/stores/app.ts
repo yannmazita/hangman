@@ -109,10 +109,16 @@ export const useAppStore = defineStore('app', () => {
         }
     }
 
-    const endGame = function() {
+    async function endGame() {
         gameStarted.value = false;
         //userStore.disconnectSocket();
         //userStore.resetSocket();
+    }
+
+    async function guessLetter(letter: string) {
+    }
+
+    async function continueGame() {
     }
 
     async function getServerStats() {
@@ -124,6 +130,8 @@ export const useAppStore = defineStore('app', () => {
     return {
         startGame,
         endGame,
+        guessLetter,
+        continueGame,
         gameStarted,
         gamePaused,
         createPlayer,

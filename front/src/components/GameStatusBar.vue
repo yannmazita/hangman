@@ -25,12 +25,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useGameStore } from '@/stores/game.ts';
+import { useAppStore } from '@/stores/app.ts';
 import { useMenuStore } from '@/stores/menu.ts';
+import { PageType } from '@/enums.ts';
 
-const gameStore = useGameStore();
+const appStore = useAppStore();
 const menuStore = useMenuStore();
-const { game } = storeToRefs(gameStore);
+const { game } = storeToRefs(appStore);
 
 const successfulGuesses = computed(() => {
     return game.value.successful_guesses;
@@ -40,11 +41,11 @@ const triesLeft = computed(() => {
 });
 
 const quitGame = function () {
-    gameStore.endGame();
-    menuStore.resetChoices();
+    appStore.endGame();
+    menuStore.setCurrentPage(PageType.SELECT_SCREEN);
 };
 const pauseGame = function () {
-    //gameStore.gamePaused = true;
-    menuStore.resetChoices();
+    //appStore.gamePaused = true;
+    menuStore.setCurrentPage(PageType.SELECT_SCREEN);
 };
 </script>

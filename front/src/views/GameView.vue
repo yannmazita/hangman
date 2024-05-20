@@ -1,34 +1,29 @@
 <template>
-    <!--<div class="flex flex-col justify-between h-full max-w-full lg:grid lg:grid-cols-12">-->
-    <div class="flex flex-col justify-between h-full max-w-full">
-        <ProfileInformation v-if="visibleComponent == SelectScreen" />
-        <KeepAlive include="GameMainView">
-            <component :is="visibleComponent" />
-        </KeepAlive>
-        <MiscInformation v-if="visibleComponent == SelectScreen" />
+    <div id="game-main-view-container" class="flex flex-col h-full">
+        <StatusBar></StatusBar>
+        <Continue></Continue>
+        <div id="game-main-view" class="flex flex-col h-full">
+            <div id="game-word-container" class="mt-auto w-full">
+                <div id="game-word-keyboard" class="w-full">
+                    <WordToGuess></WordToGuess>
+                    <CharInput></CharInput>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import { useMenuStore } from '@/stores/menu.ts';
-import { computed } from 'vue';
-import SelectScreen from '@/views/GameSelectScreenView.vue';
-import MainView from '@/views/GameMainView.vue';
-import ProfileInformation from '@/components/GameProfileInformation.vue';
-import MiscInformation from '@/components/GameMiscInformation.vue';
+import { PageType } from '@/enums.ts';
+import StatusBar from '@/components/GameStatusBar.vue';
+import WordToGuess from '@/components/GameWordToGuess.vue';
+import CharInput from '@/components/GameCharacterInput.vue';
+import Continue from '@/components/GameContinueScreen.vue';
 
 const menuStore = useMenuStore();
 
-const visibleComponent = computed(() => {
-    if (menuStore.playChoice) {
-        return MainView;
-    }
-    else if (menuStore.loginChoice) {
-        return SelectScreen;
-    }
-    else {
-        return SelectScreen;
-    }
-
+onMounted(() => {
+    menuStore.setCurrentPage(PageType.GAME);
 });
-
 </script>

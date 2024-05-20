@@ -8,21 +8,22 @@
                 <AppButton @click="logChoice">{{ logInOut }}</AppButton>
             </li>
             <li class="flex justify-center">
-                <AppButton @click="menuStore.setSettingsChoice(true)">{{ 'Settings' }}</AppButton>
+                <AppButton @click="menuStore.setCurrentPage(PageType.SETTINGS)">{{ 'Settings' }}</AppButton>
             </li>
         </div>
     </menu>
 </template>
 
 <script setup lang="ts">
-import AppButton from '@/components/AppButton.vue';
+import { onMounted, computed } from 'vue';
 import { useMenuStore } from '@/stores/menu.js';
-import { useGameStore } from '@/stores/game.ts';
+import { useAppStore } from '@/stores/app.ts';
 import { useAuthenticationStore } from '@/stores/authentication.js';
-import { computed } from 'vue';
+import { PageType } from '@/enums.ts';
+import AppButton from '@/components/AppButton.vue';
 
 const menuStore = useMenuStore();
-const gameStore = useGameStore();
+const appStore = useAppStore();
 const authStore = useAuthenticationStore();
 
 const logInOut = computed(() => {
@@ -36,16 +37,16 @@ const logInOut = computed(() => {
 
 const logChoice = function () {
     if (authStore.authenticated == false) {
-        menuStore.setLoginChoice(true);
+        menuStore.setCurrentPage(PageType.AUTH);
     }
     else {
         authStore.logoutUser();
-        gameStore.clearPlayer();
+        appStore.clearPlayer();
     }
 };
 
 const gameState = computed(() => {
-    if (gameStore.gameStarted) {
+    if (appStore.gameStarted) {
         return 'Continue';
     }
     else {
@@ -54,12 +55,16 @@ const gameState = computed(() => {
 });
 
 const gameStateChoice = function () {
-    if (gameStore.gameStarted) {
-        menuStore.setPlayChoice(true);
+    if (appStore.gameStarted) {
+        menuStore.setCurrentPage(PageType.GAME);
     }
     else {
-        menuStore.setPlayChoice(true);
-        gameStore.startGame();
+        menuStore.setCurrentPage(PageType.GAME);
+        appStore.startGame();
     }
 };
+
+onMounted(() => {
+    menuStore.setCurrentPage(PageType.SELECT_SCREEN);
+});
 </script>
