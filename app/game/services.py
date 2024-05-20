@@ -2,6 +2,7 @@ import asyncio
 import logging
 from uuid import UUID, uuid4
 
+import aiohttp
 import requests
 from fastapi import HTTPException, status
 from sqlalchemy.exc import (
@@ -301,21 +302,29 @@ class GameService(GameServiceBase):
 
         try:
             logger.debug("Attempting to get random word")
-            response = await asyncio.to_thread(
-                requests.get, "https://random-word-api.herokuapp.com/word?number=1"
-            )
-            while len(response.json()[0]) > MAX_WORD_LENGTH:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    "https://random-word-api.herokuapp.com/word?number=1"
+                ) as response:
+                    response = await response.json()
+            while len(response[0]) > MAX_WORD_LENGTH:
                 logger.debug("Word too long, retrying")
-                response = await asyncio.to_thread(
-                    requests.get, "https://random-word-api.herokuapp.com/word?number=1"
-                )
-            word_to_guess = response.json()[0]
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(
+                        "https://random-word-api.herokuapp.com/word?number=1"
+                    ) as response:
+                        response = await response.json()
+            word_to_guess = response[0]
             logger.info(f"Random word fetched: {word_to_guess}")
         except requests.exceptions.ConnectionError as e:
             logger.error(f"Error fetching random word: {e}", exc_info=False)
             word_to_guess = (
                 "computer"  # very quick fix, need to integrate local word source
             )
+            logger.warning(f"Using default word: {word_to_guess}")
+        except Exception as e:
+            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
+            word_to_guess = "computer"
             logger.warning(f"Using default word: {word_to_guess}")
 
         game: Game = await self.ensure_game_exists(player)
