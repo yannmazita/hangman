@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from uuid import UUID
 
 import requests
 from fastapi import HTTPException, status
@@ -22,6 +23,8 @@ from app.game.exceptions import (
 from app.game.models import Game
 from app.game.schemas import GameAttribute
 from app.players.models import Player
+from app.players.schemas import PlayerAttribute
+from app.players.services import PlayerService
 
 logger = logging.getLogger(__name__)
 
@@ -424,12 +427,16 @@ class GameService(GameServiceBase):
                     GameAttribute.PLAYER_ID, str(player.id), Game(game_status=0)
                 )
 
-    async def clear_game(self, player: Player) -> None:
+    async def clear_game(self, player_id: UUID) -> None:
         """
         Clears the game.
         Args:
-            player: The player to clear the game for.
+            player_id: The id of the player to clear the game for.
         """
+        player_service = PlayerService(self.session)
+        player: Player = await player_service.get_player_by_attribute(
+            PlayerAttribute.ID, str(player_id)
+        )
         await self.ensure_game_exists(player)
 
         clean_game = Game(
@@ -444,36 +451,44 @@ class GameService(GameServiceBase):
             GameAttribute.PLAYER_ID, str(player.id), clean_game
         )
 
-    async def start_game(self, player: Player) -> Game:
+    async def start_game(self, player_id: UUID) -> Game:
         """
         Starts a new game.
         Args:
-            player: The player to start the game for.
+            player_id: The id of the player to start the game for.
         Returns:
             The game.
         """
+        player_service = PlayerService(self.session)
+        player: Player = await player_service.get_player_by_attribute(
+            PlayerAttribute.ID, str(player_id)
+        )
         await self.ensure_game_exists(player)
-        await self.clear_game(player)
+        await self.clear_game(player_id)
 
         await self.get_random_word(player)
         await self.construct_word_progress(player)
         game: Game = await self.ensure_game_exists(player)
         return game
 
-    async def continue_game(self, player: Player) -> Game:
+    async def continue_game(self, player_id: UUID) -> Game:
         """
         Continues the game.
         Args:
-            player: The player to continue the game for.
+            player_id: The id of the player to continue the game for.
         Returns:
             The game.
         """
-        await self.clear_game(player)
-        await self.start_game(player)
+        player_service = PlayerService(self.session)
+        player: Player = await player_service.get_player_by_attribute(
+            PlayerAttribute.ID, str(player_id)
+        )
+        await self.clear_game(player_id)
+        await self.start_game(player_id)
         game: Game = await self.ensure_game_exists(player)
         return game
 
-    async def update_game_state(self, player: Player, character: str) -> Game:
+    async def update_game_state(self, player_id: UUID, character: str) -> Game:
         """
         Updates the game state.
         Args:
@@ -482,6 +497,10 @@ class GameService(GameServiceBase):
         Returns:
             The game.
         """
+        player_service = PlayerService(self.session)
+        player: Player = await player_service.get_player_by_attribute(
+            PlayerAttribute.ID, str(player_id)
+        )
         game: Game = await self.ensure_game_exists(player)
         if game.tries_left == 0:
             raise GameOver(player.id)

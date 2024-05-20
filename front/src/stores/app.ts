@@ -83,28 +83,24 @@ export const useAppStore = defineStore('app', () => {
 
     async function startGame() {
         gameStarted.value = true;
+        await getOwnPlayer();
         if (player.id === null) {
-            try {
-                await getOwnPlayer();
-            }
-            catch (error: unknown) {
-                if (error instanceof AxiosError) {
-                    if (error.status === 404 || error.status == 401) {
-                        await createPlayer(player.playername);
-                    }
-                }
-                else {
-                    console.log(error);
-                }
-            }
+            await createPlayer(player.playername);
         }
 
         try {
-            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/start`, {
-                headers: { Authorization: `Bearer ${authenticationStore.tokenData.access_token}` },
-            });
+            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/start/`,
+                player,
+                {
+                    headers: {
+                        accept: 'application/json',
+                        Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
+                    }
+                }
+            );
             Object.assign(game, response.data);
-        } catch (error) {
+        }
+        catch (error) {
             console.error('Failed to start game:', error);
         }
     }
@@ -115,10 +111,45 @@ export const useAppStore = defineStore('app', () => {
         //userStore.resetSocket();
     }
 
-    async function guessLetter(letter: string) {
+    async function guessCharacter(character: string) {
+        try {
+            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/guess_letter/`,
+                {
+                    "player_id": player.id,
+                    "character": character,
+                },
+                {
+                    headers: {
+                        accept: 'application/json',
+                        Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
+                    }
+                }
+            );
+            Object.assign(game, response.data);
+        }
+        catch (error) {
+            console.error('Failed to guess letter:', error);
+        }
+
     }
 
     async function continueGame() {
+        try {
+            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/continue/`,
+                { "player_id": player.id },
+                {
+                    headers: {
+                        accept: 'application/json',
+                        Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
+                    }
+                }
+            );
+            Object.assign(game, response.data);
+        }
+        catch (error) {
+            console.error('Failed to continue game:', error);
+
+        }
     }
 
     async function getServerStats() {
@@ -130,7 +161,7 @@ export const useAppStore = defineStore('app', () => {
     return {
         startGame,
         endGame,
-        guessLetter,
+        guessCharacter,
         continueGame,
         gameStarted,
         gamePaused,

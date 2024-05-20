@@ -33,7 +33,7 @@ async def create_user(
 ):
     service = UserService(session)
     try:
-        new_user = service.create_user(user)
+        new_user = await service.create_user(user)
         return new_user
     except HTTPException as e:
         raise e
@@ -52,7 +52,7 @@ async def get_user_by_id(
 ):
     service = UserService(session)
     try:
-        user = service.get_user_by_attribute(UserAttribute.ID, str(id))
+        user = await service.get_user_by_attribute(UserAttribute.ID, str(id))
         return user
     except HTTPException as e:
         raise e

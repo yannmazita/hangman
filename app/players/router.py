@@ -26,12 +26,11 @@ router = APIRouter(
 @router.post("/", response_model=PlayerRead)
 async def create_player(
     player: PlayerCreate,
-    token_data: Annotated[TokenData, Security(validate_token, scopes=[""])],
     session: AsyncSession = Depends(get_session),
 ):
     service = PlayerService(session)
     try:
-        new_player = service.create_player(player)
+        new_player = await service.create_player(player)
         return new_player
     except HTTPException as e:
         raise e
@@ -50,7 +49,7 @@ async def get_player_by_id(
 ):
     service = PlayerService(session)
     try:
-        player = service.get_player_by_attribute(PlayerAttribute.ID, str(id))
+        player = await service.get_player_by_attribute(PlayerAttribute.ID, str(id))
         return player
     except HTTPException as e:
         raise e

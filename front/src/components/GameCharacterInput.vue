@@ -29,7 +29,7 @@ const { handleSubmit, defineField } = useForm({
 const [character] = defineField('character');
 
 const onSubmit = handleSubmit(async (values, { resetForm }) => {
-    await appStore.guessLetter(values.character.toLowerCase());
+    await appStore.guessCharacter(values.character.toLowerCase());
     resetForm();
 });
 
