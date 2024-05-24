@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.auth import router as auth_routes
 from app.clients import router as client_routes
 from app.config import settings
-from app.database import create_db_and_tables, sessionmanager
+from app.database import sessionmanager
 from app.game import router as game_routes
 from app.players import router as player_routes
 from app.users import router as user_routes
@@ -20,7 +20,6 @@ logging.basicConfig(level=logging.DEBUG)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        await create_db_and_tables()
         await create_superuser()
     except Exception as e:
         logging.error(f"Error during startup: {e}", exc_info=False)
@@ -53,8 +52,6 @@ def start_server():
         log_level="info",
         reload=True,
     )
-    # when reload=true, the 1st argument the location of main as module and a string
-    # ie: "app.main:api"
 
 
 if __name__ == "__main__":

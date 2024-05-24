@@ -1,9 +1,10 @@
 from uuid import UUID
 from pydantic import validate_call
 from sqlmodel import Field, SQLModel
+from sqlalchemy.ext.asyncio import AsyncAttrs
 
 
-class PlayerBase(SQLModel):
+class PlayerBase(AsyncAttrs, SQLModel):
     playername: str = Field(index=True, unique=True)
     username: str | None = Field(default=None, index=True, foreign_key="user.username")
 

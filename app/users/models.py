@@ -2,9 +2,10 @@ from uuid import UUID
 from pydantic import validate_call
 from sqlmodel import Field, SQLModel
 from app.auth.config import OAUTH_SCOPES
+from sqlalchemy.ext.asyncio import AsyncAttrs
 
 
-class UserBase(SQLModel):
+class UserBase(AsyncAttrs, SQLModel):
     username: str = Field(index=True, unique=True)
 
 

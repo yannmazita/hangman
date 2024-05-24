@@ -1,4 +1,3 @@
-import logging
 from uuid import uuid4
 
 from fastapi import HTTPException
@@ -23,8 +22,6 @@ from app.players.models import (
 )
 from app.players.schemas import PlayerAttribute
 
-logger = logging.getLogger(__name__)
-
 
 class PlayerServiceBase:
     """
@@ -46,13 +43,11 @@ class PlayerServiceBase:
             The created player.
         """
         try:
-            logger.debug(f"Attempting to create player: {player.playername}")
             query = select(Player).where(Player.playername == player.playername)
             response = await self.session.execute(query)
             existing_player: Player | None = response.scalar_one_or_none()
 
             if existing_player:
-                logger.warning(f"Player already exists: {player.playername}")
                 raise player_already_exists
 
             new_player = Player(
@@ -62,28 +57,20 @@ class PlayerServiceBase:
             )
             db_player = Player.model_validate(new_player)
 
-            logger.debug(f"Adding new player to session: {db_player}")
             self.session.add(db_player)
 
-            logger.debug("Committing session")
             await self.session.commit()
 
-            logger.debug("Refreshing session")
             await self.session.refresh(db_player)
 
-            logger.info(f"Player created successfully: {db_player.playername}")
             return db_player
         except IntegrityError as e:
-            logger.error(f"IntegrityError occurred: {e}", exc_info=False)
             raise e
         except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
             raise e
         except HTTPException as e:
-            logger.error(f"HTTPException occurred: {e}", exc_info=False)
             raise e
         except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
             raise e
 
     async def get_player_by_attribute(
@@ -98,28 +85,18 @@ class PlayerServiceBase:
             The player with the specified attribute and value.
         """
         try:
-            logger.debug(f"Attempting to get player by {attribute.value}: {value}")
             query = select(Player).where(getattr(Player, attribute.value) == value)
             response = await self.session.execute(query)
             player = response.scalar_one()
-            logger.info(f"Player found: {player.playername}")
+
             return player
         except MultipleResultsFound:
-            logger.error(
-                f"Multiple players found for {attribute.value} = {value}",
-                exc_info=False,
-            )
             raise multiple_players_found
         except NoResultFound:
-            logger.warning(
-                f"No player found for {attribute.value} = {value}", exc_info=False
-            )
             raise player_not_found
         except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
             raise e
         except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
             raise e
 
     async def update_player_by_attribute(
@@ -135,7 +112,6 @@ class PlayerServiceBase:
             The updated player.
         """
         try:
-            logger.debug(f"Attempting to update player by {attribute.value}: {value}")
             player_db = await self.get_player_by_attribute(attribute, value)
             player_data = player.model_dump()
             for key, value in player_data.items():
@@ -144,24 +120,15 @@ class PlayerServiceBase:
             self.session.add(player_db)
             await self.session.commit()
             await self.session.refresh(player_db)
-            logger.info(f"Player updated successfully: {player_db.playername}")
+
             return player_db
         except NoResultFound:
-            logger.warning(
-                f"No player found for {attribute.value} = {value}", exc_info=False
-            )
             raise player_not_found
         except MultipleResultsFound:
-            logger.error(
-                f"Multiple players found for {attribute.value} = {value}",
-                exc_info=False,
-            )
             raise multiple_players_found
         except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
             raise e
         except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
             raise e
 
     async def delete_player(self, player: Player) -> Player:
@@ -173,21 +140,15 @@ class PlayerServiceBase:
             The deleted player.
         """
         try:
-            logger.debug(f"Attempting to delete player: {player.playername}")
             await self.session.delete(player)
             await self.session.commit()
-            logger.info(f"Player deleted successfully: {player.playername}")
+
             return player
         except NoResultFound:
-            logger.warning(
-                f"No player found to delete: {player.playername}", exc_info=False
-            )
             raise player_not_found
         except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
             raise e
         except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
             raise e
 
     async def delete_player_by_attribute(
@@ -202,28 +163,18 @@ class PlayerServiceBase:
             The deleted player.
         """
         try:
-            logger.debug(f"Attempting to delete player by {attribute.value}: {value}")
             player = await self.get_player_by_attribute(attribute, value)
             await self.session.delete(player)
             await self.session.commit()
-            logger.info(f"Player deleted successfully: {player.playername}")
+
             return player
         except NoResultFound:
-            logger.warning(
-                f"No player found for {attribute.value} = {value}", exc_info=False
-            )
             raise player_not_found
         except MultipleResultsFound:
-            logger.error(
-                f"Multiple players found for {attribute.value} = {value}",
-                exc_info=False,
-            )
             raise multiple_players_found
         except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
             raise e
         except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
             raise e
 
     async def get_players(self, offset: int = 0, limit: int = 100):
@@ -236,7 +187,6 @@ class PlayerServiceBase:
             The list of players.
         """
         try:
-            logger.debug(f"Fetching players with offset: {offset}, limit: {limit}")
             total_count_query = select(func.count()).select_from(Player)
             total_count_response = await self.session.execute(total_count_query)
             total_count: int = total_count_response.scalar_one()
@@ -244,16 +194,13 @@ class PlayerServiceBase:
             players_query = select(Player).offset(offset).limit(limit)
             players_response = await self.session.execute(players_query)
             players = players_response.scalars().all()
-            logger.info(f"Fetched {len(players)} players")
+
             return players, total_count
         except NoResultFound:
-            logger.warning("No players found", exc_info=False)
             raise player_not_found
         except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
             raise e
         except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
             raise e
 
 
@@ -294,32 +241,18 @@ class PlayerAdminService(PlayerServiceBase):
             The updated player.
         """
         try:
-            logger.debug(
-                f"Updating playername for player with {attribute.value}: {value}"
-            )
             player = await self.get_player_by_attribute(attribute, value)
             player.playername = new_playername.playername
             self.session.add(player)
             await self.session.commit()
             await self.session.refresh(player)
-            logger.info(
-                f"Playername updated to {new_playername.playername} for player: {player.playername}"
-            )
+
             return player
         except NoResultFound:
-            logger.warning(
-                f"No player found for {attribute.value} = {value}", exc_info=False
-            )
             raise player_not_found
         except MultipleResultsFound:
-            logger.error(
-                f"Multiple players found for {attribute.value} = {value}",
-                exc_info=False,
-            )
             raise multiple_players_found
         except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
             raise e
         except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
             raise e

@@ -2,9 +2,10 @@ from uuid import UUID
 from sqlalchemy import Integer
 from sqlmodel import ARRAY, Column, Field, SQLModel, String
 from app.game.config import MAX_TRIES
+from sqlalchemy.ext.asyncio import AsyncAttrs
 
 
-class GameBase(SQLModel):
+class GameBase(AsyncAttrs, SQLModel):
     player_id: UUID | None = Field(
         default=None, index=True, foreign_key="player.id", unique=True
     )

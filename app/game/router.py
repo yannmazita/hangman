@@ -14,14 +14,15 @@ router = APIRouter(
 )
 
 
-@router.post("/start", response_model=GameRead)
+@router.post("/start/player_id/{player_id}", response_model=GameRead)
 async def start_game(
     player_id: UUID,
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
     service = GameService(session)
     try:
-        await service.start_game(player_id)
+        game = await service.start_game(player_id)
+        return game
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -31,7 +32,7 @@ async def start_game(
         )
 
 
-@router.post("/end", response_model=GameRead)
+@router.post("/end/player_id/{player_id}", response_model=GameRead)
 async def end_game(
     player_id: UUID,
     session: Annotated[AsyncSession, Depends(get_session)],
@@ -48,7 +49,7 @@ async def end_game(
         )
 
 
-@router.post("/continue", response_model=GameRead)
+@router.post("/continue/player_id/{player_id}", response_model=GameRead)
 async def continue_game(
     player_id: UUID,
     session: Annotated[AsyncSession, Depends(get_session)],
@@ -65,7 +66,7 @@ async def continue_game(
         )
 
 
-@router.post("/guess", response_model=GameRead)
+@router.post("/guess/player_id/{player_id}", response_model=GameRead)
 async def guess_character(
     player_id: UUID,
     character: str,

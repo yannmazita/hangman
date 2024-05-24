@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta, timezone
 
 from jose import jwt
@@ -9,6 +10,8 @@ from app.config import settings
 from app.users.schemas import UserAttribute
 from app.users.services import UserService
 
+logger = logging.getLogger(__name__)
+
 
 async def authenticate_user(session: AsyncSession, username: str, password: str):
     service = UserService(session)
@@ -18,6 +21,7 @@ async def authenticate_user(session: AsyncSession, username: str, password: str)
         raise e
     if not verify_password(password, user.hashed_password):
         raise incorrect_username_or_password
+    logger.info(f"User {username} has been authenticated.")
     return user
 
 
@@ -31,4 +35,5 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(
         to_encode, settings.secret_key, algorithm=settings.algorithm
     )
+    logger.info(f"Access token has been created for user {data.get('sub')}.")
     return encoded_jwt

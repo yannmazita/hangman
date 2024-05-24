@@ -89,8 +89,7 @@ export const useAppStore = defineStore('app', () => {
         }
 
         try {
-            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/start/`,
-                { "player_id": player.id },
+            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/start/player_id/${player.id}`,
                 {
                     headers: {
                         accept: 'application/json',
@@ -113,9 +112,8 @@ export const useAppStore = defineStore('app', () => {
 
     async function guessCharacter(character: string) {
         try {
-            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/guess_letter/`,
+            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/guess_character/player_id/${player.id}/`,
                 {
-                    "player_id": player.id,
                     "character": character,
                 },
                 {
@@ -135,8 +133,7 @@ export const useAppStore = defineStore('app', () => {
 
     async function continueGame() {
         try {
-            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/continue/`,
-                { "player_id": player.id },
+            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/continue/player_id/${player.id}`,
                 {
                     headers: {
                         accept: 'application/json',
