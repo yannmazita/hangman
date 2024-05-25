@@ -15,6 +15,7 @@ export const useAppStore = defineStore('app', () => {
     const gameStarted: Ref<boolean> = ref(false); // The game has started.
     const gamePaused: Ref<boolean> = ref(false); // The game has been paused.
     const game: Game = reactive({
+        id: null,
         word_progress: '',
         guessed_letters: [],
         tries_left: 0,
@@ -39,7 +40,6 @@ export const useAppStore = defineStore('app', () => {
                 },
                 {
                     headers: {
-                        accept: 'application/json',
                         Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
                     }
                 }
@@ -57,7 +57,6 @@ export const useAppStore = defineStore('app', () => {
                 `${import.meta.env.VITE_API_URL}/players/me`,
                 {
                     headers: {
-                        accept: 'application/json',
                         Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
                     }
                 }
@@ -92,7 +91,6 @@ export const useAppStore = defineStore('app', () => {
             const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/start/player_id/${player.id}`,
                 {
                     headers: {
-                        accept: 'application/json',
                         Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
                     }
                 }
@@ -112,16 +110,12 @@ export const useAppStore = defineStore('app', () => {
 
     async function guessCharacter(character: string) {
         try {
-            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/guess_character/player_id/${player.id}/`,
-                {
-                    "character": character,
-                },
+            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/guess/game_id/${game.id}?character=${character}/`,
                 {
                     headers: {
-                        accept: 'application/json',
                         Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
-                    }
-                }
+                    },
+                },
             );
             Object.assign(game, response.data);
         }
@@ -136,7 +130,6 @@ export const useAppStore = defineStore('app', () => {
             const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/continue/player_id/${player.id}`,
                 {
                     headers: {
-                        accept: 'application/json',
                         Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
                     }
                 }

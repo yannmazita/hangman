@@ -24,6 +24,7 @@ export interface Player {
 }
 
 export interface Game {
+    id: string | null,
     word_progress: string | null,
     guessed_letters: string[],
     tries_left: number,

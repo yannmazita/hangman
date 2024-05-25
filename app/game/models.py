@@ -28,9 +28,7 @@ class GameCreate(GameBase):
 
 class GameRead(GameBase):
     id: UUID
-    word_to_guess: str
     word_progress: str
-    guessed_positions: list[int] = Field(default=[], sa_column=Column(ARRAY(Integer())))
     guessed_letters: list[str] = Field(default=[], sa_column=Column(ARRAY(String())))
     tries_left: int
     successful_guesses: int

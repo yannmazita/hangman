@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
-from app.game.models import GameRead
+from app.game.models import Game, GameRead
 from app.game.services import GameService
 
 router = APIRouter(
@@ -39,7 +39,8 @@ async def end_game(
 ):
     service = GameService(session)
     try:
-        await service.clear_game(player_id)
+        game: Game = await service.end_game(player_id)
+        return game
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -56,7 +57,8 @@ async def continue_game(
 ):
     service = GameService(session)
     try:
-        await service.continue_game(player_id)
+        game: Game = await service.continue_game(player_id)
+        return game
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -66,15 +68,16 @@ async def continue_game(
         )
 
 
-@router.post("/guess/player_id/{player_id}", response_model=GameRead)
+@router.post("/guess/game_id/{game_id}", response_model=GameRead)
 async def guess_character(
-    player_id: UUID,
+    game_id: UUID,
     character: str,
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
     service = GameService(session)
     try:
-        await service.update_game_state(player_id, character)
+        game: Game = await service.update_game_state(game_id, character)
+        return game
     except HTTPException as e:
         raise e
     except Exception as e:

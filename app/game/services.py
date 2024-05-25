@@ -112,24 +112,22 @@ class GameServiceBase:
             value: The value to filter by.
             game: The new game data.
         Returns:
-            The updated user.
+            The updated game.
         """
         try:
             game_db: Game = await self.get_game_by_attribute(attribute, value)
-            logger.debug(f"Found game: {game_db}")
+            logger.debug(f"Found game: {game_db})")
 
             game_data = game.model_dump()
             for key, val in game_data.items():
                 if key != "id":
                     setattr(game_db, key, val)
-                    logger.debug(f"Set {key} to {val}")
+                    logger.debug(f"Setting {key} to {val}")
 
             self.session.add(game_db)
-            logger.debug(f"Added game to session: {game_db}")
-
+            logger.debug(f"Added game to session: {game_db})")
             await self.session.commit()
             logger.debug(f"Committed session for game: {game_db}")
-
             await self.session.refresh(game_db)
             logger.debug(f"Refreshed game: {game_db}")
 
@@ -248,14 +246,16 @@ class GameService(GameServiceBase):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session)
 
-    async def get_random_word(self, player: Player) -> None:
+    async def _get_random_word(self, game: Game) -> Game:
         """
         Gets a random word from the Internet.
 
         This method queries random-word-api to get random words from.
 
         Args:
-            player: The player to get the word for.
+            game: The game to get the random word for.
+        Returns:
+            The game with the random word.
         """
         word_to_guess: str = ""
 
@@ -281,45 +281,36 @@ class GameService(GameServiceBase):
         except Exception as e:
             word_to_guess = "computer"
 
-        game: Game = await self.ensure_game_exists(player)
-
-        await self.update_game_by_attribute(
-            GameAttribute.PLAYER_ID, str(player.id), Game(word_to_guess=word_to_guess)
-        )
-        logger.debug(f"Got random word for player {player.id}")
+        game.word_to_guess = word_to_guess
+        logger.debug(f"Got random word for game {game.id}")
         logger.debug(f"Word to guess: {word_to_guess}")
+        return game
 
-    async def construct_word_progress(self, player: Player) -> None:
+    async def _construct_word_progress(self, game: Game) -> Game:
         """
         Contructs the word in its current state of discovery.
 
         Only the correctly guessed letters are present. Other letters are replaced with '*'.
 
         Args:
-            player: The player to construct the word progress for.
+            game: The game to construct the word progress for.
+        Returns:
+            The game with the constructed word progress.
         """
-        game: Game = await self.ensure_game_exists(player)
 
         if not game.word_progress:
             word_progress = "*" * len(game.word_to_guess)
-            await self.update_game_by_attribute(
-                GameAttribute.PLAYER_ID,
-                str(player.id),
-                Game(word_progress=word_progress),
-            )
         else:
             word_progress_split: list[str] = list(game.word_progress)
             for pos in game.guessed_positions:
                 word_progress_split[pos] = game.word_to_guess[pos]
             word_progress = "".join(word_progress_split)
-            await self.update_game_by_attribute(
-                GameAttribute.PLAYER_ID,
-                str(player.id),
-                Game(word_progress=word_progress),
-            )
-        logger.debug(f"Constructed word progress for player {player.id}")
+        game.word_progress = word_progress
+        logger.debug(f"Constructed word progress for game {game.id}")
+        logger.debug(f"Word progress: {word_progress}")
+        return game
 
-    async def update_guessed_positions(self, player: Player, character: str) -> None:
+    async def _update_guessed_positions(self, game: Game, character: str) -> Game:
         """
         Updates the positions of guessed characters.
 
@@ -327,34 +318,30 @@ class GameService(GameServiceBase):
         updates tries_left.
 
         Args:
-            player: The player to update the guessed positions for.
+            game: The game to update the guessed positions for.
             character: The guessed character.
+        Returns:
+            The game with the updated guessed positions.
         """
 
-        game: Game = await self.ensure_game_exists(player)
         guessed_positions = game.guessed_positions
         guessed_corretly: bool = False
 
         for pos, car in enumerate(game.word_to_guess):
             if character == car:
                 guessed_positions.append(pos)
-                await self.update_game_by_attribute(
-                    GameAttribute.PLAYER_ID,
-                    str(player.id),
-                    Game(guessed_positions=guessed_positions),
-                )
                 guessed_corretly = True
+                game.guessed_positions = guessed_positions
 
-        await self.construct_word_progress(player)
+        updated_game = await self._construct_word_progress(game)
 
         if not guessed_corretly:
             tries_left = game.tries_left
-            await self.update_game_by_attribute(
-                GameAttribute.PLAYER_ID, str(player.id), Game(tries_left=tries_left - 1)
-            )
-        logger.debug(f"Updated guessed positions for player {player.id}")
+            updated_game.tries_left = tries_left - 1
+        logger.debug(f"Updated guessed positions for game {updated_game.id}")
+        return updated_game
 
-    async def update_guessed_letters(self, player: Player, character: str) -> None:
+    async def _update_guessed_letters(self, game: Game, character: str) -> Game:
         """
         Updates the guessed letters list.
 
@@ -362,63 +349,47 @@ class GameService(GameServiceBase):
         Whether the character is correct or not.
 
         Args:
-            player: The player to update the guessed letters for.
+            game: The game to update the guessed letters for.
             character: The guessed character.
+        Returns:
+            The game with the updated guessed letters.
         """
-        game: Game = await self.ensure_game_exists(player)
         if character not in game.guessed_letters:
             guessed_letters = game.guessed_letters
             guessed_letters.append(character)
-            await self.update_game_by_attribute(
-                GameAttribute.PLAYER_ID,
-                str(player.id),
-                Game(guessed_letters=guessed_letters),
-            )
-        logger.debug(f"Updated guessed letters for player {player.id}")
+            game.guessed_letters = guessed_letters
+        logger.debug(f"Updated guessed letters for game {game.id}")
+        return game
 
-    async def update_game_status(self, player: Player) -> None:
+    async def _update_game_status(self, game: Game) -> Game:
         """
         Updates the game status.
 
         Args:
-            player: The player to update the game status for.
+            game: The game to update the status for.
+        Returns:
+            The game with the updated status.
         """
-
-        game: Game = await self.ensure_game_exists(player)
 
         if game.game_status == 0:
             if game.tries_left == 0:
-                await self.update_game_by_attribute(
-                    GameAttribute.PLAYER_ID, str(player.id), Game(game_status=-1)
-                )
+                game.game_status = -1
             elif game.word_to_guess == game.word_progress:
-                await self.update_game_by_attribute(
-                    GameAttribute.PLAYER_ID, str(player.id), Game(game_status=1)
-                )
-                successful_guesses = game.successful_guesses
-                await self.update_game_by_attribute(
-                    GameAttribute.PLAYER_ID,
-                    str(player.id),
-                    Game(successful_guesses=successful_guesses + 1),
-                )
+                game.game_status = 1
+                game.successful_guesses += +1
             else:
-                await self.update_game_by_attribute(
-                    GameAttribute.PLAYER_ID, str(player.id), Game(game_status=0)
-                )
-        logger.debug(f"Updated game status for player {player.id}")
+                game.game_status = 0
+        logger.debug(f"Updated game status for game {game.id}")
+        return game
 
-    async def clear_game(self, player_id: UUID) -> None:
+    async def _clear_game(self, game: Game) -> Game:
         """
         Clears the game.
         Args:
-            player_id: The id of the player to clear the game for.
+            game: The game to clear.
+        Returns:
+            The cleared game.
         """
-        player_service = PlayerService(self.session)
-        player: Player = await player_service.get_player_by_attribute(
-            PlayerAttribute.ID, str(player_id)
-        )
-        await self.ensure_game_exists(player)
-
         clean_game = Game(
             word_to_guess="",
             word_progress="",
@@ -427,11 +398,11 @@ class GameService(GameServiceBase):
             tries_left=MAX_TRIES,
             game_status=0,
         )
-
-        await self.update_game_by_attribute(
-            GameAttribute.PLAYER_ID, str(player.id), clean_game
-        )
-        logger.debug(f"Cleared game for player {player.id}")
+        clean_game.id = game.id
+        clean_game.player_id = game.player_id
+        clean_game.successful_guesses = game.successful_guesses
+        logger.debug(f"Cleared game for game {game.id}")
+        return clean_game
 
     async def start_game(self, player_id: UUID) -> Game:
         """
@@ -447,13 +418,31 @@ class GameService(GameServiceBase):
         player: Player = await player_service.get_player_by_attribute(
             PlayerAttribute.ID, str(player_id)
         )
-        await self.ensure_game_exists(player)
-        await self.clear_game(player_id)
-        await self.get_random_word(player)
-        await self.construct_word_progress(player)
         game: Game = await self.ensure_game_exists(player)
+        updated_game = await self._construct_word_progress(
+            await self._get_random_word(await self._clear_game(game))
+        )
         logger.info(f"Started game for player {player.id}")
-        return game
+        await self.update_game_by_attribute(
+            GameAttribute.PLAYER_ID, str(player.id), updated_game
+        )
+        logger.debug(f"Updated game for player {player.id}")
+        return updated_game
+
+    async def end_game(self, player_id: UUID) -> Game:
+        """
+        Ends the game.
+        Args:
+            player_id: The id of the player to end the game for.
+        Returns:
+            The game.
+        """
+        game: Game = await self.get_game_by_attribute(
+            GameAttribute.PLAYER_ID, str(player_id)
+        )
+        ended_game = await self._clear_game(game)
+        logger.info(f"Ended game for player {player_id}")
+        return ended_game
 
     async def continue_game(self, player_id: UUID) -> Game:
         """
@@ -463,35 +452,36 @@ class GameService(GameServiceBase):
         Returns:
             The game.
         """
-        player_service = PlayerService(self.session)
-        player: Player = await player_service.get_player_by_attribute(
-            PlayerAttribute.ID, str(player_id)
+        started_game: Game = await self.start_game(player_id)
+        logger.info(f"Continued game for player {player_id}")
+        await self.update_game_by_attribute(
+            GameAttribute.PLAYER_ID, str(player_id), started_game
         )
-        await self.clear_game(player_id)
-        await self.start_game(player_id)
-        game: Game = await self.ensure_game_exists(player)
-        logger.info(f"Continued game for player {player.id}")
-        return game
+        logger.debug(f"Updated game for player {player_id}")
+        return started_game
 
-    async def update_game_state(self, player_id: UUID, character: str) -> Game:
+    async def update_game_state(self, game_id: UUID, character: str) -> Game:
         """
         Updates the game state.
         Args:
-            player: The player to update the game state for.
+            game_id: The id of the game to update the state for.
             character: The guessed character.
         Returns:
             The game.
         """
-        player_service = PlayerService(self.session)
-        player: Player = await player_service.get_player_by_attribute(
-            PlayerAttribute.ID, str(player_id)
-        )
-        game: Game = await self.ensure_game_exists(player)
+        game: Game = await self.get_game_by_attribute(GameAttribute.ID, str(game_id))
         if game.tries_left == 0:
-            raise GameOver(player.id)
-        await self.update_guessed_positions(player, character)
-        await self.update_guessed_letters(player, character)
-        await self.update_game_status(player)
-        game: Game = await self.ensure_game_exists(player)
-        logger.info(f"Updated game state for player {player.id}")
-        return game
+            raise GameOver(game.player_id)
+        game_updated_guessed_postions: Game = await self._update_guessed_positions(
+            game, character
+        )
+        game_updated_guessed_letters: Game = await self._update_guessed_letters(
+            game_updated_guessed_postions, character
+        )
+        game_updated_game_status: Game = await self._update_game_status(
+            game_updated_guessed_letters
+        )
+        logger.info(f"Updated game state for game {game.id}")
+        await self.update_game_by_attribute(GameAttribute.ID, str(game_id), game)
+        logger.debug(f"Updated game for game {game.id}")
+        return game_updated_game_status
