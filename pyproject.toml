@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hangman"
-version = "0.1.0"
+version = "0.2.0"
 description = "Hangman guessing game"
 authors = ["Mazita <dev.mazita@gmail.com>"]
 license = "GPL3"
