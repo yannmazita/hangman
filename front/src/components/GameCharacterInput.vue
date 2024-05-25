@@ -9,14 +9,14 @@
     </div>
 </template>
 <script setup lang="ts">
-import { useUserStore } from '@/stores/user.js';
+import { useAppStore } from '@/stores/app.ts';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/yup';
 import { object, string } from 'yup';
 import AppInput from '@/components/AppInput.vue';
 import Keyboard from '@/components/AppVisualKeyboard.vue';
 
-const userStore = useUserStore();
+const appStore = useAppStore();
 
 const schema = toTypedSchema(
     object({
@@ -29,13 +29,7 @@ const { handleSubmit, defineField } = useForm({
 const [character] = defineField('character');
 
 const onSubmit = handleSubmit(async (values, { resetForm }) => {
-    const message = JSON.stringify({
-        action: 'guess_letter',
-        data: {
-            letter: values.character.toLowerCase(),
-        },
-    });
-    userStore.sendSocketMessage(message);
+    await appStore.guessCharacter(values.character.toLowerCase());
     resetForm();
 });
 

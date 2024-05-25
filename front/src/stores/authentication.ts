@@ -10,9 +10,9 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         token_type: null,
     });
     const user: User = reactive({
-        id: null,
-        username: null,
-        player_id: null,
+        id: "",
+        username: "",
+        roles: "",
     });
 
     // This function is to be called when the user is already logged in.
@@ -70,9 +70,8 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             // maybe use forEach or something
             tokenData.access_token = null;
             tokenData.token_type = null;
-            user.id = null;
-            user.username = null;
-            user.player_id = null;
+            user.id = "";
+            user.username = "";
             authenticated.value = false;
         }
         catch (error) {

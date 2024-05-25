@@ -1,39 +1,27 @@
-import os
+import logging
 from datetime import datetime, timedelta, timezone
 
-from passlib.context import CryptContext
 from jose import jwt
-from sqlalchemy.exc import NoResultFound
-from sqlmodel import Session, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.exceptions import incorrect_username_or_password
-from app.database import engine
-from app.users.exceptions import user_not_found
-from app.users.models import User
+from app.auth.utils import verify_password
+from app.config import settings
+from app.users.schemas import UserAttribute
+from app.users.services import UserService
+
+logger = logging.getLogger(__name__)
 
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-
-def authenticate_user(username: str, password: str):
+async def authenticate_user(session: AsyncSession, username: str, password: str):
+    service = UserService(session)
     try:
-        session: Session = Session(engine)
-        user = session.exec(select(User).where(User.username == username)).one()
-    except NoResultFound:
-        raise user_not_found
+        user = await service.get_user_by_attribute(UserAttribute.USERNAME, username)
+    except Exception as e:
+        raise e
     if not verify_password(password, user.hashed_password):
         raise incorrect_username_or_password
+    logger.info(f"User {username} has been authenticated.")
     return user
 
 
@@ -44,5 +32,8 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)  # type: ignore
+    encoded_jwt = jwt.encode(
+        to_encode, settings.secret_key, algorithm=settings.algorithm
+    )
+    logger.info(f"Access token has been created for user {data.get('sub')}.")
     return encoded_jwt

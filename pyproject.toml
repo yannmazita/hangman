@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hangman"
-version = "0.1.0"
+version = "0.2.0"
 description = "Hangman guessing game"
 authors = ["Mazita <dev.mazita@gmail.com>"]
 license = "GPL3"
@@ -18,6 +18,9 @@ passlib = { extras = ["bcrypt"], version = "^1.7.4" }
 python-dotenv = "^1.0.0"
 sqlmodel = "^0.0.14"
 requests = "^2.31.0"
+asyncpg = "^0.29.0"
+pydantic-settings = "^2.2.1"
+aiohttp = "^3.9.5"
 
 [build-system]
 requires = ["poetry-core"]

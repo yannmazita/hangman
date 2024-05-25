@@ -6,11 +6,12 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, ref, computed } from 'vue';
 import { useMenuStore } from '@/stores/menu.ts';
 import { useAuthenticationStore } from '@/stores/authentication.js'
-import { ref, computed } from 'vue';
 import SelectMenu from '@/components/GameSelectMenu.vue';
 import AuthForm from '@/components/GameAuthenticationForm.vue';
+import { PageType } from '@/enums';
 
 const menuStore = useMenuStore();
 const authStore = useAuthenticationStore();
@@ -18,19 +19,23 @@ const currentSlot = ref('');
 const currentProps = ref({});
 
 const visibleComponent = computed(() => {
-    if (menuStore.loginChoice && authStore.authenticated == false) {
+    if (menuStore.currentPage === PageType.AUTH && authStore.authenticated == false) {
         // User chose to log on and isn't authenticated.
         currentProps.value = { confirmPassword: false };
         return AuthForm;
     }
-    else if (menuStore.loginChoice && authStore.authenticated != false) {
+    else if (menuStore.currentPage === PageType.AUTH && authStore.authenticated != false) {
         // User chose to logon is authenticated. Send them back.
-        menuStore.resetChoices();
+        //menuStore.resetPage();
         return SelectMenu;
     }
     else {
         return SelectMenu;
     }
 })
+
+onMounted(() => {
+    menuStore.setCurrentPage(PageType.SELECT_SCREEN);
+});
 
 </script>

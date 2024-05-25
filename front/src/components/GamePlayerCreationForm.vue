@@ -16,22 +16,23 @@
     </div>
 </template>
 <script setup lang="ts">
-import { useGameStore } from '@/stores/game.ts';
-import { useMenuStore } from '@/stores/menu.ts';
 import { ref } from 'vue';
+import { useAppStore } from '@/stores/app.ts';
+import { useMenuStore } from '@/stores/menu.ts';
+import { PageType } from '@/enums.ts';
 import AppButton from '@/components/AppButton.vue';
 import AppInput from '@/components/AppInput.vue';
 
-const gameStore = useGameStore();
+const appStore = useAppStore();
 const menuStore = useMenuStore();
 const playername = ref('');
 
 const goToSelectScreen = function () {
-    //gameStore.gamePaused = true;
-    menuStore.resetChoices();
+    //appStore.gamePaused = true;
+    menuStore.setCurrentPage(PageType.SELECT_SCREEN);
 };
 
 async function submitForm() {
-    gameStore.createPlayer(playername.value);
+    appStore.createPlayer(playername.value);
 }
 </script>

@@ -1,105 +1,84 @@
-import { defineStore } from 'pinia';
 import { ref, Ref } from 'vue';
-import { v4 as uuidv4 } from 'uuid';
+import { defineStore } from 'pinia';
+import axios from 'axios';
 import { useAuthenticationStore } from '@/stores/authentication.ts';
+import { User, UserCreate } from '@/interfaces.ts';
 
 export const useUserStore = defineStore('user', () => {
-    const socket: Ref<WebSocket | null> = ref(null);
-    const socketConnected: Ref<boolean> = ref(false);
-    const socketError: Ref<Event | null> = ref(null);
-    const socketMessage: Ref<any | null> = ref(null);
+    const users: Ref<User[]> = ref([]);
+    const totalUsers: Ref<number> = ref(0);
 
-    const authStore = useAuthenticationStore();
-
-    async function connectSocket(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const id: string = authStore.user.id ? authStore.user.id : uuidv4();
-            const path: string = 'user';
-            const queryParam: string = 'user_id';
-
-            socket.value = new WebSocket(
-                `${import.meta.env.VITE_WS_URL}/${path}?${queryParam}=${id}`
-            );
-            socket.value.onopen = () => {
-                socketConnected.value = true;
-                sendTokenData();
-                console.log('(user) Websocket connected.');
-                resolve();
-            };
-            socket.value.onerror = (error) => {
-                socketError.value = error;
-                console.log(error);
-                reject(error);
-            };
-            socket.value.onmessage = (message) => {
-                socketMessage.value = JSON.parse(message.data.toString());
-                console.log('(user) Message received: ', socketMessage.value);
-            };
-            socket.value.onclose = () => {
-                socketConnected.value = false;
-                console.log('(user) Websocket closed.');
-            };
-        });
+    async function getUsers(offset: number = 0, limit: number = 25): Promise<void> {
+        const authenticationStore = useAuthenticationStore();
+        try {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/all`, {
+                headers: { Authorization: `Bearer ${authenticationStore.tokenData.access_token}` },
+                params: { offset, limit },
+            });
+            users.value = response.data[0];
+            totalUsers.value = response.data[1];
+        } catch (error) {
+            console.error('Failed to get users:', error);
+        }
+    };
+    async function addUser(userData: UserCreate): Promise<void> {
+        const authenticationStore = useAuthenticationStore();
+        try {
+            await axios.post(`${import.meta.env.VITE_API_URL}/users/`, userData, {
+                headers: { Authorization: `Bearer ${authenticationStore.tokenData.access_token}` }
+            });
+        } catch (error) {
+            console.error('Failed to add user:', error);
+        }
+    };
+    async function updateUser(id: string, userData: UserCreate): Promise<void> {
+        const authenticationStore = useAuthenticationStore();
+        try {
+            await axios.put(`${import.meta.env.VITE_API_URL}/users/id/${id}`, userData, {
+                headers: { Authorization: `Bearer ${authenticationStore.tokenData.access_token}` }
+            });
+        } catch (error) {
+            console.error('Failed to update user:', error);
+        }
+    };
+    async function updateUserUsername(id: string, username: string): Promise<void> {
+        const authenticationStore = useAuthenticationStore();
+        try {
+            await axios.patch(`${import.meta.env.VITE_API_URL}/users/id/${id}/username`, { username }, {
+                headers: { Authorization: `Bearer ${authenticationStore.tokenData.access_token}` }
+            });
+        } catch (error) {
+            console.error('Failed to update user username:', error);
+        }
     }
-
-    async function disconnectSocket(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            try {
-                socket.value?.close();
-                console.log('(user) Websocket disconnected.');
-                resolve();
-            }
-            catch (error) {
-                console.log(error);
-                reject(error);
-            }
-        });
+    async function updateUserRoles(id: string, roles: string): Promise<void> {
+        const authenticationStore = useAuthenticationStore();
+        try {
+            await axios.patch(`${import.meta.env.VITE_API_URL}/users/id/${id}/roles`, { roles }, {
+                headers: { Authorization: `Bearer ${authenticationStore.tokenData.access_token}` }
+            });
+        } catch (error) {
+            console.error('Failed to update user roles:', error);
+        }
+    };
+    async function deleteUser(id: string): Promise<void> {
+        const authenticationStore = useAuthenticationStore();
+        try {
+            await axios.delete(`${import.meta.env.VITE_API_URL}/users/id/${id}`, {
+                headers: { Authorization: `Bearer ${authenticationStore.tokenData.access_token}` }
+            });
+        } catch (error) {
+            console.error('Failed to delete user:', error);
+        }
     }
-
-    async function sendSocketMessage(message: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            try {
-                socket.value?.send(message);
-                console.log('(user) Message sent: ', message);
-                resolve();
-            }
-            catch (error) {
-                console.log(error);
-                reject(error);
-            }
-        });
-    }
-
-    function resetSocket(): void {
-        socket.value = null;
-        socketConnected.value = false;
-        socketError.value = null;
-        socketMessage.value = null;
-    }
-
-    async function sendTokenData(): Promise<void> {
-        return new Promise(async (reolve, reject) => {
-            try {
-                await sendSocketMessage(JSON.stringify({
-                    action: 'token_data',
-                    data: authStore.tokenData,
-                }));
-                reolve();
-            }
-            catch (error) {
-                console.log(error);
-                reject(error);
-            }
-        });
-    }
-
     return {
-        socketConnected,
-        socketError,
-        socketMessage,
-        connectSocket,
-        disconnectSocket,
-        sendSocketMessage,
-        resetSocket,
+        users,
+        totalUsers,
+        getUsers,
+        addUser,
+        updateUser,
+        updateUserUsername,
+        updateUserRoles,
+        deleteUser,
     }
-});
+})

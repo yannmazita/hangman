@@ -4,13 +4,17 @@ import { createPinia } from 'pinia'
 import './style.css'
 import App from '@/App.vue'
 
-import GameView from '@/views/GameView.vue'
+import MainView from '@/views/MainView.vue'
+import FeedbackView from '@/views/FeedbackView.vue'
+import HighscoresView from '@/views/HighscoresView.vue'
 
 const pinia = createPinia()
 const router = createRouter({
     history: createWebHistory(),
     routes: [
-        { path: '', component: GameView },
+        { path: '', component: MainView },
+        { path: '', component: FeedbackView },
+        { path: '', component: HighscoresView },
     ]
 })
 

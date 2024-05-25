@@ -1,6 +1,6 @@
-### First stage ###
+### Base python stage ###
 
-FROM python:3.11-alpine as python-base
+FROM python:3.11-alpine as base
 
 ENV PYTHONFAULTHANDLER=1 PYTHONUNBUFFERED=1
 
@@ -12,9 +12,9 @@ WORKDIR /application
 RUN chown -R appuser:appuser /application
 
 
-### Second stage ###
+### Development and build stage ###
 
-FROM python-base as python-builder
+FROM base as builder
 ENV PIP_NO_CACHE_DIR=1
 ENV PATH="/home/appuser/.local/bin:${PATH}"
 
@@ -24,28 +24,26 @@ RUN python -m venv /.poetry-venv && \
     /.poetry-venv/bin/pip install poetry==1.7.1
 
 # Copy python source code
-COPY app/ /python-source/app
-COPY poetry.lock /python-source/
-COPY pyproject.toml /python-source/
-COPY README.md /python-source
+COPY ./ /python-source/app
+RUN mv /python-source/app/poetry.lock /python-source/ \
+    && mv /python-source/app/pyproject.toml /python-source/
 
-################### This needs to be cleaned up
-COPY .env.example /python-source/
-RUN mv /python-source/.env.example /python-source/.env
-################### This needs to be cleaned up
-
-# Build python package
+# Install dependencies, optionally build for production
 WORKDIR /python-source
-RUN /.poetry-venv/bin/poetry config virtualenvs.in-project true \
+ARG BUILD_PRODUCTION
+RUN if [ "$BUILD_PRODUCTION" = "true" ]; then \
+/.poetry-venv/bin/poetry config virtualenvs.in-project true \
     && /.poetry-venv/bin/poetry install --only=main --no-root --no-interaction --no-ansi \
-    && /.poetry-venv/bin/poetry build
+    && /.poetry-venv/bin/poetry build; else \
+    /.poetry-venv/bin/poetry install --no-root --no-interaction --no-ansi; \
+    fi
 
 
-### Final stage ###
+### Production stage ###
 
-FROM python-base as python-final
-COPY --from=python-builder /python-source/.venv /application/.venv
-COPY --from=python-builder /python-source/dist /application/dist
+FROM base as production
+COPY --from=builder /python-source/.venv /application/.venv
+COPY --from=builder /python-source/dist /application/dist
 
 RUN chown -R appuser:appuser /application
 
@@ -53,12 +51,10 @@ USER appuser
 ENV PATH="/application/.venv/bin:/application/${USER}:/.local/bin:${PATH}"
 ENV VIRTUAL_ENV="/application/.venv"
 
-################### This needs to be cleaned up
 RUN python -m venv /application/.venv \
     && python -m pip install /application/dist/*.whl \
     && mv /application/.venv/lib/python3.11/site-packages/app /application/
-COPY --from=python-builder /python-source/.env /application/
+COPY --from=builder /python-source/.env /application/
 
 EXPOSE 8000
 CMD ["python", "-m", "app.main"]
-################### This needs to be cleaned up

@@ -1,14 +1,21 @@
 import { defineStore } from 'pinia'
 import { ref, reactive, Ref } from 'vue'
-import { useUserStore } from '@/stores/user.ts';
+import { useClientStore } from '@/stores/client.ts';
 import { useAuthenticationStore } from '@/stores/authentication.ts';
 import { Game, Player, ServerStats } from '@/interfaces.ts';
 import axios from 'axios';
+import { AxiosResponse, AxiosError } from 'axios';
 
-export const useGameStore = defineStore('game', () => {
+export const useAppStore = defineStore('app', () => {
+    const clientStore = useClientStore();
+    const authenticationStore = useAuthenticationStore();
+    const serverStats: ServerStats = reactive({
+        active_users: 0,
+    });
     const gameStarted: Ref<boolean> = ref(false); // The game has started.
     const gamePaused: Ref<boolean> = ref(false); // The game has been paused.
     const game: Game = reactive({
+        id: null,
         word_progress: '',
         guessed_letters: [],
         tries_left: 0,
@@ -24,21 +31,15 @@ export const useGameStore = defineStore('game', () => {
         games_played: 0,
         games_won: 0,
     });
-    const serverStats: ServerStats = reactive({
-        active_players: 0,
-    });
-    const userStore = useUserStore();
-    const authenticationStore = useAuthenticationStore();
 
     async function createPlayer(playername: string) {
         try {
-            const response = await axios.post(`${import.meta.env.VITE_API_URL}/players/`,
+            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/players/`,
                 {
                     "playername": playername,
                 },
                 {
                     headers: {
-                        accept: 'application/json',
                         Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
                     }
                 }
@@ -46,17 +47,16 @@ export const useGameStore = defineStore('game', () => {
             Object.assign(player, response.data);
         }
         catch (error) {
-            console.log(error);
+            console.error('Failed to create player:', error);
         }
     }
 
     async function getOwnPlayer() {
         try {
-            const response = await axios.get(
+            const response: AxiosResponse = await axios.get(
                 `${import.meta.env.VITE_API_URL}/players/me`,
                 {
                     headers: {
-                        accept: 'application/json',
                         Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
                     }
                 }
@@ -67,6 +67,7 @@ export const useGameStore = defineStore('game', () => {
             //console.log(error);
             //throw error; // Rethrow the error to the caller.
             // only works when it's a js error, not an axios error?
+            console.error('Failed to get own player:', error);
         }
     }
 
@@ -81,34 +82,68 @@ export const useGameStore = defineStore('game', () => {
 
     async function startGame() {
         gameStarted.value = true;
+        await getOwnPlayer();
         if (player.id === null) {
-            try {
-                await getOwnPlayer();
-            }
-            catch (error) {
-                console.log(error);
-            }
+            await createPlayer(player.playername);
         }
 
         try {
-            await userStore.connectSocket();
-            await userStore.sendSocketMessage(JSON.stringify({
-                action: 'start_game',
-            }));
+            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/start/player_id/${player.id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
+                    }
+                }
+            );
+            Object.assign(game, response.data);
         }
         catch (error) {
-            console.log(error);
+            console.error('Failed to start game:', error);
         }
     }
 
-    const endGame = function() {
+    async function endGame() {
         gameStarted.value = false;
-        userStore.disconnectSocket();
-        userStore.resetSocket();
+        //userStore.disconnectSocket();
+        //userStore.resetSocket();
+    }
+
+    async function guessCharacter(character: string) {
+        try {
+            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/guess/game_id/${game.id}?character=${character}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
+                    },
+                },
+            );
+            Object.assign(game, response.data);
+        }
+        catch (error) {
+            console.error('Failed to guess letter:', error);
+        }
+
+    }
+
+    async function continueGame() {
+        try {
+            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/continue/player_id/${player.id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
+                    }
+                }
+            );
+            Object.assign(game, response.data);
+        }
+        catch (error) {
+            console.error('Failed to continue game:', error);
+
+        }
     }
 
     async function getServerStats() {
-        userStore.sendSocketMessage(JSON.stringify({
+        clientStore.sendSocketMessage(JSON.stringify({
             action: 'server_stats',
         }));
     };
@@ -116,6 +151,8 @@ export const useGameStore = defineStore('game', () => {
     return {
         startGame,
         endGame,
+        guessCharacter,
+        continueGame,
         gameStarted,
         gamePaused,
         createPlayer,

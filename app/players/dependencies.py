@@ -1,108 +1,40 @@
-from uuid import UUID
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Query, Security, status
-from sqlmodel import Session, select
-from sqlalchemy.exc import NoResultFound
+from fastapi import Depends, Security, status
+from fastapi.exceptions import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import engine
-from app.users.dependencies import get_own_user
 from app.auth.dependencies import validate_token
-from app.players.models import Player, PlayerCreate
 from app.auth.models import TokenData
-from app.users.models import User
+from app.database import get_session
+from app.players.models import Player
+from app.players.schemas import PlayerAttribute
+from app.players.services import PlayerService
 
 
 async def get_own_player(
-    token_data: Annotated[
-        TokenData, Security(validate_token, scopes=["user:own:player"])
-    ],
+    token_data: Annotated[TokenData, Security(validate_token, scopes=["player:own"])],
+    session: Annotated[AsyncSession, Depends(get_session)],
 ) -> Player:
-    with Session(engine) as session:
-        try:
-            player = session.exec(
-                select(Player).where(Player.username == token_data.username)
-            ).one()
-            return player
-        except NoResultFound:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User has no player"
-            )
+    """Get own player.
+    Args:
+        token_data: Token data.
+        session: The database session.
+    Returns:
+        A Player instance representing own player.
+    """
+    service = PlayerService(session)
+    assert token_data.playername is not None
+    try:
+        player = await service.get_player_by_attribute(
+            PlayerAttribute.USERNAME, token_data.playername
+        )
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
 
-
-async def create_new_player(
-    token_data: Annotated[
-        TokenData, Security(validate_token, scopes=["user:own.write"])
-    ],
-    player: PlayerCreate,
-):
-    with Session(engine) as session:
-        try:
-            # Should not be possible, but better be bulletproof.
-            session.exec(select(Player).where(Player.username == player.username)).one()
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Player with this username already exists",
-            )
-        except NoResultFound:
-            pass
-    new_player = Player(playername=player.username, username=player.username)
-    db_player = Player.model_validate(new_player)
-    with Session(engine) as session:
-        session.add(db_player)
-        session.commit()
-        session.refresh(db_player)
-    return db_player
-
-
-async def get_players(
-    token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
-    offset: int = 0,
-    limit: int = Query(default=100, le=100),
-):
-    with Session(engine) as session:
-        players = session.exec(select(Player).offset(offset).limit(limit)).all()
-        return players
-
-
-async def get_player_by_id(player_id: UUID) -> Player:
-    with Session(engine) as session:
-        try:
-            player = session.exec(select(Player).where(Player.id == player_id)).one()
-            return player
-        except NoResultFound:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Player does not exist"
-            )
-
-
-async def get_player(
-    token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
-    player_id: UUID,
-) -> Player:
-    return await get_player_by_id(player_id)
-
-
-async def remove_player_by_id(player_id: UUID) -> Player:
-    with Session(engine) as session:
-        try:
-            player = session.exec(select(Player).where(Player.id == player_id)).one()
-            session.delete(player)
-            session.commit()
-            return player
-        except NoResultFound:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Player does not exist"
-            )
-
-
-async def remove_player(
-    token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
-    player_id: UUID,
-) -> Player:
-    return await remove_player_by_id(player_id)
-
-
-async def remove_own_player(user: Annotated[User, Depends(get_own_user)]) -> Player:
-    assert user.player_id is not None
-    return await remove_player_by_id(user.player_id)
+    return player

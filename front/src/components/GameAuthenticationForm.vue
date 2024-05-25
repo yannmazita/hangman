@@ -25,6 +25,8 @@
     </div>
 </template>
 <script setup lang="ts">
+import { onMounted, defineProps } from 'vue';
+import { PageType } from '@/enums.ts';
 import { useAuthenticationStore } from '@/stores/authentication.js';
 import { useMenuStore } from '@/stores/menu.ts';
 import { useForm } from 'vee-validate';
@@ -69,7 +71,10 @@ const onSubmit = handleSubmit(async (values, { resetForm }) => {
 });
 
 const goToSelectScreen = function () {
-    menuStore.resetChoices();
+    menuStore.setCurrentPage(PageType.SELECT_SCREEN);
 };
 
+onMounted(() => {
+    menuStore.setCurrentPage(PageType.AUTH);
+});
 </script>
