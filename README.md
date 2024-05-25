@@ -36,9 +36,9 @@ Currently both are accessible through your local network.
 The frontend is served to `localhost:5173` in dev and `localhost:80` in prod.
 The backend is served to `localhost:8000` in both environments, currently.
 
-
 However backend services depend on database services, starting the former will start up the latter.
 
+The API (OpenAPI/SwaggerUI) documentation can be found at `localhost:8000/docs#`.
 
 ## Infrastructure
 
