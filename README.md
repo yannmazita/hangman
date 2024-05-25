@@ -2,7 +2,7 @@
 
 Mobile and desktop hangman guessing game using VueJS and FastAPI.
 
-[demo](https://github.com/yannmazita/hangman/assets/83191036/17b80991-0369-4f4c-923e-5e0849e7976f)
+[demo.webm](https://github.com/yannmazita/hangman/assets/83191036/7e73ba94-eb3d-4ddb-96cf-c2e4cff22f82)
 
 ## Running
 
