@@ -419,12 +419,12 @@ class GameService(GameServiceBase):
             PlayerAttribute.ID, str(player_id)
         )
         game: Game = await self.ensure_game_exists(player)
-        updated_game = await self._construct_word_progress(
+        started_game = await self._construct_word_progress(
             await self._get_random_word(await self._clear_game(game))
         )
         logger.info(f"Started game for player {player.id}")
-        await self.update_game_by_attribute(
-            GameAttribute.PLAYER_ID, str(player.id), updated_game
+        updated_game: Game = await self.update_game_by_attribute(
+            GameAttribute.PLAYER_ID, str(player.id), started_game
         )
         logger.debug(f"Updated game for player {player.id}")
         return updated_game
@@ -454,11 +454,11 @@ class GameService(GameServiceBase):
         """
         started_game: Game = await self.start_game(player_id)
         logger.info(f"Continued game for player {player_id}")
-        await self.update_game_by_attribute(
+        updated_game: Game = await self.update_game_by_attribute(
             GameAttribute.PLAYER_ID, str(player_id), started_game
         )
         logger.debug(f"Updated game for player {player_id}")
-        return started_game
+        return updated_game
 
     async def update_game_state(self, game_id: UUID, character: str) -> Game:
         """
@@ -475,13 +475,18 @@ class GameService(GameServiceBase):
         game_updated_guessed_postions: Game = await self._update_guessed_positions(
             game, character
         )
+        logger.debug(f"Game : {game_updated_guessed_postions}")
         game_updated_guessed_letters: Game = await self._update_guessed_letters(
             game_updated_guessed_postions, character
         )
+        logger.debug(f"Game : {game_updated_guessed_letters}")
         game_updated_game_status: Game = await self._update_game_status(
             game_updated_guessed_letters
         )
+        logger.debug(f"Game : {game_updated_game_status}")
         logger.info(f"Updated game state for game {game.id}")
-        await self.update_game_by_attribute(GameAttribute.ID, str(game_id), game)
+        updated_game: Game = await self.update_game_by_attribute(
+            GameAttribute.ID, str(game_id), game
+        )
         logger.debug(f"Updated game for game {game.id}")
-        return game_updated_game_status
+        return updated_game

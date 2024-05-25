@@ -110,7 +110,7 @@ export const useAppStore = defineStore('app', () => {
 
     async function guessCharacter(character: string) {
         try {
-            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/guess/game_id/${game.id}?character=${character}/`,
+            const response: AxiosResponse = await axios.post(`${import.meta.env.VITE_API_URL}/game/guess/game_id/${game.id}?character=${character}`,
                 {
                     headers: {
                         Authorization: `Bearer ${authenticationStore.tokenData.access_token}`,
