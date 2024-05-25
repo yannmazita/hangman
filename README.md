@@ -2,7 +2,7 @@
 
 Mobile and desktop hangman guessing game using VueJS and FastAPI.
 
-<img src="./docs/screen-1-mobile.png" width="30%"></img> <img src="./docs/screen-2-mobile.png" width="30%"></img> <img src="./docs/screen-3-mobile.png" width="30%"></img>
+[demo](https://github.com/yannmazita/hangman/assets/83191036/17b80991-0369-4f4c-923e-5e0849e7976f)
 
 ## Running
 
