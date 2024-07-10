@@ -26,7 +26,6 @@ router = APIRouter(
 @router.post("/", response_model=PlayerRead)
 async def create_player(
     data: PlayerCreate,
-    token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
     repository: Annotated[PlayerRepository, Depends()],
 ):

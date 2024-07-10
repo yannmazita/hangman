@@ -29,3 +29,14 @@ class GameRead(GameBase, UuidMixin):
     tries_left: int
     successful_guesses: int
     game_status: int
+
+
+class GameUpdate(Base):
+    word_to_guess: str | None = None
+    word_progress: str | None = None
+    guessed_positions: list[int] | None = None
+    guessed_letters: list[str] | None = None
+    tries_left: int | None = None
+    successful_guesses: int | None = None
+    game_status: int | None = None
+    player_id: UUID | None = None

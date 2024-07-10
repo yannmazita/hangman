@@ -5,7 +5,6 @@ from app.schemas import Base, UuidMixin
 
 
 class Player(Base, UuidMixin):
-    id: UUID | None = None
     points: int = 0
     games_played: int = 0
     games_won: int = 0

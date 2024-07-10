@@ -3,12 +3,14 @@ from uuid import UUID
 
 import aiohttp
 import requests
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.game.config import MAX_TRIES, MAX_WORD_LENGTH
 from app.game.exceptions import GameOver
 from app.game.models import Game
 from app.game.repository import GameRepository
+from app.game.schemas import GameCreate
 from app.players.models import Player
 from app.players.repository import PlayerRepository
 
@@ -29,6 +31,25 @@ class GameServiceBase:
     ) -> None:
         self.game_repository = game_repository
         self.player_repository = player_repository
+
+    async def ensure_game_exists(self, session: AsyncSession, player_id: UUID) -> Game:
+        """
+        Ensures that a game exists for the player.
+        If no game exists for the player, a new game is created.
+        Args:
+            session: The database session to be used for the operation.
+            player_id: The id of the player to ensure the game for.
+        Returns:
+            The game.
+        """
+        try:
+            game: Game = await self.game_repository.get_by_attribute(
+                session, player_id, "player_id"
+            )
+        except NoResultFound:
+            data: GameCreate = GameCreate(player_id=player_id)
+            game: Game = await self.game_repository.create(session, data)
+        return game
 
 
 class GameService(GameServiceBase):
@@ -215,9 +236,7 @@ class GameService(GameServiceBase):
         player: Player = await self.player_repository.get_by_attribute(
             session, player_id
         )
-        game: Game = await self.game_repository.get_by_attribute(
-            session, player_id, "player_id"
-        )
+        game: Game = await self.ensure_game_exists(session, player_id)
         started_game = await self._construct_word_progress(
             await self._get_random_word(await self._clear_game(game))
         )
