@@ -1,9 +1,11 @@
 from uuid import UUID
+
 from fastapi import WebSocket
 from pydantic import ValidationError
-from app.clients.models import (
-    AppStats,
+
+from app.clients.schemas import (
     AppError,
+    AppStats,
     WebsocketMessage,
 )
 from app.clients.utils import Connections

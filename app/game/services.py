@@ -1,250 +1,48 @@
 import logging
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import aiohttp
 import requests
-from fastapi import HTTPException, status
-from sqlalchemy.exc import (
-    IntegrityError,
-    MultipleResultsFound,
-    NoResultFound,
-    SQLAlchemyError,
-)
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import func, select
 
 from app.game.config import MAX_TRIES, MAX_WORD_LENGTH
-from app.game.exceptions import (
-    GameOver,
-    game_already_exists,
-    game_not_found,
-    multiple_games_found,
-)
+from app.game.exceptions import GameOver
 from app.game.models import Game
-from app.game.schemas import GameAttribute
+from app.game.repository import GameRepository
 from app.players.models import Player
-from app.players.schemas import PlayerAttribute
-from app.players.services import PlayerService
+from app.players.repository import PlayerRepository
 
 logger = logging.getLogger(__name__)
 
 
 class GameServiceBase:
     """
-    Base class for game-related services.
+    Base class for game-related operations.
 
     Attributes:
-        session: The database session.
+        game_repository: The game repository to be used for operations.
+        player_repository: The player repository to be used for operations.
     """
 
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
-
-    async def create_new_game(self, player: Player) -> Game:
-        """
-        Creates a new game.
-        Args:
-            player: The player to create the game for.
-        Returns:
-            The created game.
-        """
-        try:
-            query = select(Game).where(Game.player_id == player.id)
-            response = await self.session.execute(query)
-            existing_game: Game | None = response.scalar_one_or_none()
-
-            if existing_game:
-                raise game_already_exists
-
-            new_game = Game(
-                id=uuid4(),
-                player_id=player.id,
-            )
-            db_game = Game.model_validate(new_game)
-
-            self.session.add(db_game)
-
-            await self.session.commit()
-
-            await self.session.refresh(db_game)
-            return db_game
-
-        except IntegrityError as e:
-            raise e
-        except SQLAlchemyError as e:
-            raise e
-        except HTTPException as e:
-            raise e
-        except Exception as e:
-            raise e
-
-    async def get_game_by_attribute(self, attribute: GameAttribute, value: str) -> Game:
-        """
-        Get a game by a specified attribute.
-        Args:
-            attribute: The attribute to filter by.
-            value: The value to filter by.
-        Returns:
-            The game with the specified attribute and value.
-        """
-        try:
-            query = select(Game).where(getattr(Game, attribute.value) == value)
-            response = await self.session.execute(query)
-            game = response.scalar_one()
-
-            return game
-        except MultipleResultsFound:
-            raise multiple_games_found
-        except NoResultFound:
-            raise game_not_found
-        except SQLAlchemyError as e:
-            raise e
-        except Exception as e:
-            raise e
-
-    async def update_game_by_attribute(
-        self, attribute: GameAttribute, value: str, game: Game
-    ) -> Game:
-        """
-        Update a user using a specified attribute.
-        Args:
-            attribute: The attribute to filter by.
-            value: The value to filter by.
-            game: The new game data.
-        Returns:
-            The updated game.
-        """
-        try:
-            game_db: Game = await self.get_game_by_attribute(attribute, value)
-            logger.debug(f"Found game: {game_db})")
-
-            game_data = game.model_dump()
-            for key, val in game_data.items():
-                if key != "id":
-                    setattr(game_db, key, val)
-                    logger.debug(f"Setting {key} to {val}")
-
-            self.session.add(game_db)
-            logger.debug(f"Added game to session: {game_db})")
-            await self.session.commit()
-            logger.debug(f"Committed session for game: {game_db}")
-            await self.session.refresh(game_db)
-            logger.debug(f"Refreshed game: {game_db}")
-
-            return game_db
-        except NoResultFound:
-            raise game_not_found
-        except MultipleResultsFound:
-            raise multiple_games_found
-        except SQLAlchemyError as e:
-            raise e
-        except Exception as e:
-            raise e
-
-    async def delete_game(self, game: Game) -> Game:
-        """
-        Delete a game.
-        Args:
-            game: The game to delete.
-        Returns:
-            The deleted game.
-        """
-        try:
-            await self.session.delete(game)
-            await self.session.commit()
-
-            return game
-        except NoResultFound:
-            raise game_not_found
-        except SQLAlchemyError as e:
-            raise e
-        except Exception as e:
-            raise e
-
-    async def delete_game_by_attribute(
-        self, attribute: GameAttribute, value: str
-    ) -> Game:
-        """
-        Delete a game using a specified attribute.
-        Args:
-            attribute: The attribute to filter by.
-            value: The value to filter by.
-        Returns:
-            The deleted game.
-        """
-        try:
-            game = await self.get_game_by_attribute(attribute, value)
-            await self.session.delete(game)
-            await self.session.commit()
-
-            return game
-        except NoResultFound:
-            raise game_not_found
-        except MultipleResultsFound:
-            raise multiple_games_found
-        except SQLAlchemyError as e:
-            raise e
-        except Exception as e:
-            raise e
-
-    async def get_games(self, offset: int = 0, limit: int = 100):
-        """
-        Get all games.
-        Args:
-            offset: The number of users to skip.
-            limit: The maximum number of users to return.
-        Returns:
-            The list of games.
-        """
-        try:
-            total_count_query = select(func.count()).select_from(Game)
-            total_count_response = await self.session.execute(total_count_query)
-            total_count: int = total_count_response.scalar_one()
-
-            games_query = select(Game).offset(offset).limit(limit)
-            games_response = await self.session.execute(games_query)
-            games = games_response.scalars().all()
-
-            return games, total_count
-        except NoResultFound:
-            raise game_not_found
-        except SQLAlchemyError as e:
-            raise e
-        except Exception as e:
-            raise e
-
-    async def ensure_game_exists(self, player: Player) -> Game:
-        """
-        Ensures a game exists.
-
-        This method checks if a game exists for a player. If not, it creates a new game.
-        Args:
-            player: The player to ensure the game for.
-        Returns:
-            The game.
-        """
-        try:
-            game = await self.get_game_by_attribute(
-                GameAttribute.PLAYER_ID, str(player.id)
-            )
-        except HTTPException as e:
-            if e.status_code == status.HTTP_404_NOT_FOUND:
-                game = await self.create_new_game(player)
-            else:
-                raise e
-        return game
+    def __init__(
+        self, game_repository: GameRepository, player_repository: PlayerRepository
+    ) -> None:
+        self.game_repository = game_repository
+        self.player_repository = player_repository
 
 
 class GameService(GameServiceBase):
     """
-    Class for game-related services.
+    Class for game-related operations.
 
     Attributes:
-        session: The database session.
+        repository: The game repository to be used for operations.
     """
 
-    def __init__(self, session: AsyncSession) -> None:
-        super().__init__(session)
+    def __init__(
+        self, game_repository: GameRepository, player_repository: PlayerRepository
+    ) -> None:
+        super().__init__(game_repository, player_repository)
 
     async def _get_random_word(self, game: Game) -> Game:
         """
@@ -404,72 +202,78 @@ class GameService(GameServiceBase):
         logger.debug(f"Cleared game for game {game.id}")
         return clean_game
 
-    async def start_game(self, player_id: UUID) -> Game:
+    async def start_game(self, session: AsyncSession, player_id: UUID) -> Game:
         """
         Starts a new game.
         Args:
+            session: The database session to be used for the operation.
             player_id: The id of the player to start the game for.
         Returns:
             The game.
         """
 
-        player_service = PlayerService(self.session)
-
-        player: Player = await player_service.get_player_by_attribute(
-            PlayerAttribute.ID, str(player_id)
+        player: Player = await self.player_repository.get_by_attribute(
+            session, player_id
         )
-        game: Game = await self.ensure_game_exists(player)
+        game: Game = await self.game_repository.get_by_attribute(
+            session, player_id, "player_id"
+        )
         started_game = await self._construct_word_progress(
             await self._get_random_word(await self._clear_game(game))
         )
         logger.info(f"Started game for player {player.id}")
-        updated_game: Game = await self.update_game_by_attribute(
-            GameAttribute.PLAYER_ID, str(player.id), started_game
+        updated_game: Game = await self.game_repository.update_by_attribute(
+            session, started_game, game.id
         )
         logger.debug(f"Updated game for player {player.id}")
         return updated_game
 
-    async def end_game(self, player_id: UUID) -> Game:
+    async def end_game(self, session: AsyncSession, player_id: UUID) -> Game:
         """
         Ends the game.
         Args:
+            session: The database session to be used for the operation.
             player_id: The id of the player to end the game for.
         Returns:
             The game.
         """
-        game: Game = await self.get_game_by_attribute(
-            GameAttribute.PLAYER_ID, str(player_id)
+        game: Game = await self.game_repository.get_by_attribute(
+            session, player_id, "player_id"
         )
         ended_game = await self._clear_game(game)
         logger.info(f"Ended game for player {player_id}")
         return ended_game
 
-    async def continue_game(self, player_id: UUID) -> Game:
+    async def continue_game(self, session: AsyncSession, player_id: UUID) -> Game:
         """
         Continues the game.
         Args:
+            session: The database session to be used for the operation.
             player_id: The id of the player to continue the game for.
         Returns:
             The game.
         """
-        started_game: Game = await self.start_game(player_id)
+        started_game: Game = await self.start_game(session, player_id)
         logger.info(f"Continued game for player {player_id}")
-        updated_game: Game = await self.update_game_by_attribute(
-            GameAttribute.PLAYER_ID, str(player_id), started_game
+        updated_game: Game = await self.game_repository.update_by_attribute(
+            session, started_game, started_game.id
         )
         logger.debug(f"Updated game for player {player_id}")
         return updated_game
 
-    async def update_game_state(self, game_id: UUID, character: str) -> Game:
+    async def update_game_state(
+        self, session: AsyncSession, game_id: UUID, character: str
+    ) -> Game:
         """
         Updates the game state.
         Args:
+            session: The database session to be used for the operation.
             game_id: The id of the game to update the state for.
             character: The guessed character.
         Returns:
             The game.
         """
-        game: Game = await self.get_game_by_attribute(GameAttribute.ID, str(game_id))
+        game: Game = await self.game_repository.get_by_attribute(session, game_id)
         if game.tries_left == 0:
             raise GameOver(game.player_id)
         game_updated_guessed_postions: Game = await self._update_guessed_positions(
@@ -485,8 +289,8 @@ class GameService(GameServiceBase):
         )
         logger.debug(f"Game : {game_updated_game_status}")
         logger.info(f"Updated game state for game {game.id}")
-        updated_game: Game = await self.update_game_by_attribute(
-            GameAttribute.ID, str(game_id), game
+        updated_game: Game = await self.game_repository.update_by_attribute(
+            session, game, game_id
         )
         logger.debug(f"Updated game for game {game.id}")
         return updated_game

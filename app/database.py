@@ -1,7 +1,6 @@
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator
 
-from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import (
     AsyncConnection,
     AsyncSession,
@@ -9,7 +8,9 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.models import Base
 from app.config import settings
+
 
 # use pydantic url validation abilities instead
 ASYNC_POSTGRES_URL: str = (
@@ -69,11 +70,11 @@ sessionmanager = DatabaseSessionManager(
 )
 
 
-async def get_session():
+async def get_session() -> AsyncIterator[AsyncSession]:
     async with sessionmanager.session() as session:
         yield session
 
 
 async def create_db_and_tables():
     async with sessionmanager._engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+        await conn.run_sync(Base.metadata.create_all)

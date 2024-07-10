@@ -7,11 +7,11 @@ from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.config import OAUTH_SCOPES
-from app.auth.models import TokenData
+from app.auth.schemas import TokenData
 from app.config import settings
 from app.database import get_session
-from app.users.schemas import UserAttribute
-from app.users.services import UserService
+from app.users.models import User
+from app.users.repository import UserRepository
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="login",
@@ -24,12 +24,14 @@ async def validate_token(
     security_scopes: SecurityScopes,
     token: Annotated[str, Depends(oauth2_scheme)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ) -> TokenData:
     """Validate token and check if it has the required scopes.
     Args:
         security_scopes: Scopes required by the dependent.
         token: Token to validate.
         session: Database session.
+        repository: User repository.
     Returns:
         A TokenData instance representing the token data.
     """
@@ -62,10 +64,8 @@ async def validate_token(
         raise credentials_exception
 
     try:
-        assert token_data.username is not None
-        service = UserService(session)
-        user = await service.get_user_by_attribute(
-            UserAttribute.USERNAME, token_data.username
+        user: User = await repository.get_by_attribute(
+            session, token_data.username, "username"
         )
         user_scopes: list[str] = user.roles.split(" ")
         # Allow admin users to act as if they have any scope

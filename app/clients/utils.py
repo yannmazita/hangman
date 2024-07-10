@@ -1,9 +1,10 @@
 import json
 from uuid import UUID
+
 from fastapi import WebSocket
 from fastapi.encoders import jsonable_encoder
 
-from app.clients.models import WebsocketMessage
+from app.clients.schemas import WebsocketMessage
 
 
 class Connection:
@@ -19,7 +20,6 @@ class Connections:
 
     def __init__(self):
         self.active_connections: dict[UUID, Connection] = {}
-        # self.active_unauthenticated_connections: dict[UUID, Connection] = {}
 
     def connect(self, websocket: WebSocket, id: UUID) -> None:
         """
