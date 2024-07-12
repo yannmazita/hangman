@@ -1,35 +1,18 @@
 from uuid import UUID
-from sqlalchemy import Integer
-from sqlmodel import ARRAY, Column, Field, SQLModel, String
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.types import ARRAY, Integer, String
 from app.game.config import MAX_TRIES
-from sqlalchemy.ext.asyncio import AsyncAttrs
+from app.models import Base, UuidMixin
 
 
-class GameBase(AsyncAttrs, SQLModel):
-    player_id: UUID | None = Field(
-        default=None, index=True, foreign_key="player.id", unique=True
-    )
-
-
-class Game(GameBase, table=True):
-    id: UUID | None = Field(default=None, primary_key=True)
-    word_to_guess: str = Field(default="")
-    word_progress: str = Field(default="")
-    guessed_positions: list[int] = Field(default=[], sa_column=Column(ARRAY(Integer())))
-    guessed_letters: list[str] = Field(default=[], sa_column=Column(ARRAY(String())))
-    tries_left: int = Field(default=MAX_TRIES)
-    successful_guesses: int = Field(default=0)
-    game_status: int = Field(default=0)
-
-
-class GameCreate(GameBase):
-    pass
-
-
-class GameRead(GameBase):
-    id: UUID
-    word_progress: str
-    guessed_letters: list[str] = Field(default=[], sa_column=Column(ARRAY(String())))
-    tries_left: int
-    successful_guesses: int
-    game_status: int
+class Game(Base, UuidMixin):
+    __tablename__ = "games"
+    player_id: Mapped[UUID] = mapped_column(ForeignKey("players.id"))
+    word_to_guess: Mapped[str] = mapped_column(default="")
+    word_progress: Mapped[str] = mapped_column(default="")
+    guessed_positions: Mapped[list[int]] = mapped_column(ARRAY(Integer), default=[])
+    guessed_letters: Mapped[list[str]] = mapped_column(ARRAY(String), default=[])
+    tries_left: Mapped[int] = mapped_column(default=MAX_TRIES)
+    successful_guesses: Mapped[int] = mapped_column(default=0)
+    game_status: Mapped[int] = mapped_column(default=0)

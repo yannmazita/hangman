@@ -1,40 +1,29 @@
 from typing import Annotated
 
-from fastapi import Depends, Security, status
-from fastapi.exceptions import HTTPException
+from fastapi import Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import validate_token
-from app.auth.models import TokenData
+from app.auth.schemas import TokenData
 from app.database import get_session
 from app.players.models import Player
-from app.players.schemas import PlayerAttribute
-from app.players.services import PlayerService
+from app.players.repository import PlayerRepository
 
 
 async def get_own_player(
     token_data: Annotated[TokenData, Security(validate_token, scopes=["player:own"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[PlayerRepository, Depends()],
 ) -> Player:
     """Get own player.
     Args:
         token_data: Token data.
         session: The database session.
+        repository: Player repository.
     Returns:
-        A Player instance representing own player.
+        Own player.
     """
-    service = PlayerService(session)
-    assert token_data.playername is not None
-    try:
-        player = await service.get_player_by_attribute(
-            PlayerAttribute.USERNAME, token_data.playername
-        )
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
+    player: Player = await repository.get_by_attribute(
+        session, token_data.username, "username"
+    )
     return player

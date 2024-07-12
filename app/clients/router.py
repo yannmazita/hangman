@@ -1,15 +1,17 @@
 from uuid import UUID
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from app.clients.models import (
+
+from app.clients.schemas import (
     AppStats,
     WebsocketMessage,
 )
-from app.clients.utils import Connections
 from app.clients.services import (
     on_client_connect,
     on_client_disconnect,
     validate_message,
 )
+from app.clients.utils import Connections
 
 router = APIRouter(
     prefix="/ws",

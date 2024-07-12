@@ -1,21 +1,21 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi import APIRouter, Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import validate_token
 from app.auth.models import TokenData
 from app.database import get_session
 from app.players.dependencies import get_own_player
-from app.players.models import (
-    Player,
+from app.players.repository import PlayerRepository
+from app.players.schemas import (
     PlayerCreate,
-    PlayerPlayernameUpdate,
+    PlayerUpdate,
     PlayerRead,
 )
-from app.players.schemas import PlayerAttribute
-from app.players.services import PlayerAdminService, PlayerService
+from app.players.models import Player
+from app.players.services import PlayerAdminService
 
 router = APIRouter(
     prefix="/players",
@@ -25,20 +25,12 @@ router = APIRouter(
 
 @router.post("/", response_model=PlayerRead)
 async def create_player(
-    player: PlayerCreate,
-    session: AsyncSession = Depends(get_session),
+    data: PlayerCreate,
+    session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[PlayerRepository, Depends()],
 ):
-    service = PlayerService(session)
-    try:
-        new_player = await service.create_player(player)
-        return new_player
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
+    new_player = await repository.create(session, data)
+    return new_player
 
 
 @router.get("/id/{id}", response_model=PlayerRead)
@@ -46,62 +38,33 @@ async def get_player_by_id(
     id: UUID,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[PlayerRepository, Depends()],
 ):
-    service = PlayerService(session)
-    try:
-        player = await service.get_player_by_attribute(PlayerAttribute.ID, str(id))
-        return player
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
+    player = await repository.get_by_attribute(session, id)
+    return player
 
 
 @router.get("/all", response_model=tuple[list[PlayerRead], int])
 async def get_all_players(
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[PlayerRepository, Depends()],
     offset: int = 0,
     limit: int = 100,
 ):
-    service = PlayerService(session)
-    try:
-        players, total_count = await service.get_players(offset, limit)
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
+    players, total_count = await repository.get_all(session, offset, limit)
     return players, total_count
 
 
 @router.put("/id/{id}", response_model=PlayerRead)
 async def update_player_by_id(
     id: UUID,
-    player: PlayerCreate,
+    data: PlayerUpdate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[PlayerRepository, Depends()],
 ):
-    service = PlayerService(session)
-    try:
-        updated_player = await service.update_player_by_attribute(
-            PlayerAttribute.ID, str(id), player
-        )
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        print(e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
+    updated_player = await repository.update_by_attribute(session, data, id)
     return updated_player
 
 
@@ -110,41 +73,22 @@ async def delete_player_by_id(
     id: UUID,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[PlayerRepository, Depends()],
 ):
-    service = PlayerService(session)
-    try:
-        player = await service.delete_player_by_attribute(PlayerAttribute.ID, str(id))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
+    player = await repository.delete(session, id)
     return player
 
 
 @router.patch("/id/{id}/playername", response_model=PlayerRead)
 async def update_player_playername_by_id(
     id: UUID,
-    playername_data: PlayerPlayernameUpdate,
+    data: PlayerUpdate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[PlayerRepository, Depends()],
 ):
-    admin_service = PlayerAdminService(session)
-    try:
-        updated_player = await admin_service.update_player_playername_by_attribute(
-            PlayerAttribute.ID, str(id), playername_data
-        )
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
+    admin_service = PlayerAdminService(repository)
+    updated_player = await admin_service.update_player_playername(session, id, data)
     return updated_player
 
 
@@ -157,16 +101,6 @@ async def get_own_player(player: Annotated[Player, Depends(get_own_player)]):
 async def delete_own_player(
     player: Annotated[Player, Depends(get_own_player)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[PlayerRepository, Depends()],
 ):
-    service = PlayerService(session)
-    try:
-        await service.delete_player(player)
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
-    return player
+    player = await repository.delete(session, player.id)

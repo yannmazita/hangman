@@ -4,31 +4,26 @@ from fastapi import Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import validate_token
-from app.auth.models import TokenData
+from app.auth.schemas import TokenData
 from app.database import get_session
 from app.users.models import User
-from app.users.schemas import UserAttribute
-from app.users.services import UserService
+from app.users.repository import UserRepository
 
 
 async def get_own_user(
     token_data: Annotated[TokenData, Security(validate_token, scopes=["user:own"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ) -> User:
     """Get own user.
     Args:
         token_data: Token data.
         session: The database session.
+        repository: User repository.
     Returns:
-        A User instance representing own user.
+        Own user.
     """
-    service = UserService(session)
-    assert token_data.username is not None
-    try:
-        user = await service.get_user_by_attribute(
-            UserAttribute.USERNAME, token_data.username
-        )
-    except Exception as e:
-        raise e
-
+    user: User = await repository.get_by_attribute(
+        session, token_data.username, "username"
+    )
     return user

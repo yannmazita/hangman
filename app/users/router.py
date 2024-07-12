@@ -1,22 +1,22 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi import APIRouter, Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import validate_token
-from app.auth.models import TokenData
+from app.auth.schemas import TokenData
 from app.database import get_session
 from app.users.dependencies import get_own_user
 from app.users.models import (
     User,
-    UserCreate,
-    UserPasswordUpdate,
-    UserRead,
-    UserRolesUpdate,
-    UserUsernameUpdate,
 )
-from app.users.schemas import UserAttribute
+from app.users.repository import UserRepository
+from app.users.schemas import (
+    UserCreate,
+    UserRead,
+    UserUpdate,
+)
 from app.users.services import UserAdminService, UserService
 
 router = APIRouter(
@@ -27,21 +27,13 @@ router = APIRouter(
 
 @router.post("/", response_model=UserRead)
 async def create_user(
-    user: UserCreate,
+    data: UserCreate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
-    session: AsyncSession = Depends(get_session),
+    session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    service = UserService(session)
-    try:
-        new_user = await service.create_user(user)
-        return new_user
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
+    new_user = await repository.create(session, data)
+    return new_user
 
 
 @router.get("/id/{id}", response_model=UserRead)
@@ -49,62 +41,33 @@ async def get_user_by_id(
     id: UUID,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    service = UserService(session)
-    try:
-        user = await service.get_user_by_attribute(UserAttribute.ID, str(id))
-        return user
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
+    user = await repository.get_by_attribute(session, id)
+    return user
 
 
 @router.get("/all", response_model=tuple[list[UserRead], int])
 async def get_all_users(
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
     offset: int = 0,
     limit: int = 100,
 ):
-    service = UserService(session)
-    try:
-        users, total_count = await service.get_users(offset, limit)
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
+    users, total_count = await repository.get_all(session, offset, limit)
     return users, total_count
 
 
 @router.put("/id/{id}", response_model=UserRead)
 async def update_user_by_id(
     id: UUID,
-    user: UserCreate,
+    data: UserUpdate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    service = UserService(session)
-    try:
-        updated_user = await service.update_user_by_attribute(
-            UserAttribute.ID, str(id), user
-        )
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        print(e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
+    updated_user = await repository.update_by_attribute(session, data, id)
     return updated_user
 
 
@@ -113,64 +76,35 @@ async def delete_user_by_id(
     id: UUID,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    service = UserService(session)
-    try:
-        user = await service.delete_user_by_attribute(UserAttribute.ID, str(id))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
+    user = await repository.delete(session, id)
     return user
 
 
 @router.patch("/id/{id}/username", response_model=UserRead)
 async def update_user_username_by_id(
     id: UUID,
-    username_data: UserUsernameUpdate,
+    data: UserUpdate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    admin_service = UserAdminService(session)
-    try:
-        updated_user = await admin_service.update_user_username_by_attribute(
-            UserAttribute.ID, str(id), username_data
-        )
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
+    admin_service = UserAdminService(repository)
+    updated_user = await admin_service.update_user_username(session, id, data)
     return updated_user
 
 
 @router.patch("/id/{id}/roles", response_model=UserRead)
 async def update_user_roles_by_id(
     id: UUID,
-    roles_data: UserRolesUpdate,
+    data: UserUpdate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    admin_service = UserAdminService(session)
-    try:
-        updated_user = await admin_service.update_user_roles_by_attribute(
-            UserAttribute.ID, str(id), roles_data
-        )
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
+    admin_service = UserAdminService(repository)
+    updated_user = await admin_service.update_user_roles(session, id, data)
     return updated_user
 
 
@@ -183,35 +117,27 @@ async def get_own_user(user: Annotated[User, Depends(get_own_user)]):
 async def delete_own_user(
     user: Annotated[User, Depends(get_own_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    service = UserService(session)
-    try:
-        await service.delete_user(user)
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
-    return user
+    if user.id is not None:
+        user = await repository.delete(session, user.id)
+        return user
+    else:
+        # raise something
+        pass
 
 
 @router.patch("/me/password", response_model=UserRead)
 async def update_own_password(
     user: Annotated[User, Depends(get_own_user)],
-    password_data: UserPasswordUpdate,
+    data: UserUpdate,
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    service = UserService(session)
-    try:
-        await service.update_user_password(user, password_data)
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-    return user
+    service = UserService(repository)
+    if user.id is not None:
+        updated_user = await service.update_user_password(session, user.id, data)
+        return updated_user
+    else:
+        # raise something
+        pass
