@@ -10,7 +10,7 @@ from app.game.config import MAX_TRIES, MAX_WORD_LENGTH
 from app.game.exceptions import GameOver
 from app.game.models import Game
 from app.game.repository import GameRepository
-from app.game.schemas import GameCreate
+from app.game.schemas import GameCreate, GameUpdate
 from app.players.models import Player
 from app.players.repository import PlayerRepository
 
@@ -241,8 +241,18 @@ class GameService(GameServiceBase):
             await self._get_random_word(await self._clear_game(game))
         )
         logger.info(f"Started game for player {player.id}")
+        started_game_schema: GameUpdate = GameUpdate(
+            word_to_guess=started_game.word_to_guess,
+            word_progress=started_game.word_progress,
+            guessed_positions=started_game.guessed_positions,
+            guessed_letters=started_game.guessed_letters,
+            tries_left=started_game.tries_left,
+            successful_guesses=started_game.successful_guesses,
+            game_status=started_game.game_status,
+            player_id=started_game.player_id,
+        )
         updated_game: Game = await self.game_repository.update_by_attribute(
-            session, started_game, game.id
+            session, started_game_schema, game.id
         )
         logger.debug(f"Updated game for player {player.id}")
         return updated_game
@@ -274,8 +284,18 @@ class GameService(GameServiceBase):
         """
         started_game: Game = await self.start_game(session, player_id)
         logger.info(f"Continued game for player {player_id}")
+        started_game_schema: GameUpdate = GameUpdate(
+            word_to_guess=started_game.word_to_guess,
+            word_progress=started_game.word_progress,
+            guessed_positions=started_game.guessed_positions,
+            guessed_letters=started_game.guessed_letters,
+            tries_left=started_game.tries_left,
+            successful_guesses=started_game.successful_guesses,
+            game_status=started_game.game_status,
+            player_id=started_game.player_id,
+        )
         updated_game: Game = await self.game_repository.update_by_attribute(
-            session, started_game, started_game.id
+            session, started_game_schema, started_game.id
         )
         logger.debug(f"Updated game for player {player_id}")
         return updated_game
@@ -308,8 +328,18 @@ class GameService(GameServiceBase):
         )
         logger.debug(f"Game : {game_updated_game_status}")
         logger.info(f"Updated game state for game {game.id}")
+        game_schema: GameUpdate = GameUpdate(
+            word_to_guess=game.word_to_guess,
+            word_progress=game.word_progress,
+            guessed_positions=game.guessed_positions,
+            guessed_letters=game.guessed_letters,
+            tries_left=game.tries_left,
+            successful_guesses=game.successful_guesses,
+            game_status=game.game_status,
+            player_id=game.player_id,
+        )
         updated_game: Game = await self.game_repository.update_by_attribute(
-            session, game, game_id
+            session, game_schema, game_id
         )
         logger.debug(f"Updated game for game {game.id}")
         return updated_game
