@@ -52,16 +52,22 @@ services:
     profiles: ["dev"]
     <<: *backend-base
     build:
-      context: ./app
-      target: builder
-    command: /.poetry-venv/bin/poetry run python -m app.main
+      context: .
+      dockerfile: ./app/Dockerfile
+      target: builder-dev
+      args: 
+        WORKDIR: /home/appuser/application
+    command: /home/appuser/application/.venv/bin/poetry run python -m app.main
     env_file: "./.env"
     environment:
-     - POSTGRES_HOST=postgres-dev
+      - POSTGRES_HOST=postgres-dev
+      - WATCHFILES_FORCE_POLLING=true
     ports:
       - 8000:8000
     expose:
       - 8000
+    volumes:
+      - ./app:/home/appuser/application/code/app
     depends_on:
       postgres-dev:
         condition: service_healthy
@@ -71,10 +77,13 @@ services:
     profiles: ["prod"]
     <<: *backend-base
     build:
-      context: ./app
+      context: .
+      dockerfile: ./app/Dockerfile
       target: production
       args:
+        WORKDIR: /home/appuser/application
         BUILD_PRODUCTION: "true"
+    command: /home/appuser/application/.venv/bin/python -m app.main
     env_file: "./.env"
     environment:
       - POSTGRES_HOST=postgres-prod
@@ -96,6 +105,8 @@ services:
       target: builder
     command: npm run host --reload
     env_file: "./.env"
+    environment:
+      - WATCHFILES_FORCE_POLLING=true
     ports:
       - 5173:5173
     expose:
