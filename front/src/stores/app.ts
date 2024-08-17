@@ -71,7 +71,7 @@ export const useAppStore = defineStore('app', () => {
         }
     }
 
-    const clearPlayer = function() {
+    function clearPlayer() {
         player.id = null;
         player.username = null;
         player.playername = `Player${Math.floor(Math.random() * 1000)}`;

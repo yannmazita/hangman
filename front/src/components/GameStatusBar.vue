@@ -40,11 +40,11 @@ const triesLeft = computed(() => {
     return game.value.tries_left;
 });
 
-const quitGame = function () {
+function quitGame(): void {
     appStore.endGame();
     menuStore.setCurrentPage(PageType.SELECT_SCREEN);
 };
-const pauseGame = function () {
+function pauseGame(): void {
     //appStore.gamePaused = true;
     menuStore.setCurrentPage(PageType.SELECT_SCREEN);
 };

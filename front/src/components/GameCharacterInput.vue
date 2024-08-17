@@ -33,7 +33,7 @@ const onSubmit = handleSubmit(async (values, { resetForm }) => {
     resetForm();
 });
 
-const updateAppInput = (key: string) => {
+function updateAppInput (key: string): void {
     character.value = key;
 };
 

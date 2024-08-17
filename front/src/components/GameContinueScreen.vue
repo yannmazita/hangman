@@ -25,7 +25,7 @@ const gameStatus = computed(() => {
     return game.value.game_status;
 });
 
-const continueGame = async function (choice: boolean) {
+async function continueGame(choice: boolean): Promise<void> {
     if (choice) {
         showModal.value = false;
         await appStore.continueGame();

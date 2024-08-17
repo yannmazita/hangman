@@ -35,7 +35,7 @@ const logInOut = computed(() => {
     }
 });
 
-const logChoice = function () {
+function logChoice(): void {
     if (authStore.authenticated == false) {
         menuStore.setCurrentPage(PageType.AUTH);
     }
@@ -54,7 +54,7 @@ const gameState = computed(() => {
     }
 });
 
-const gameStateChoice = function () {
+function gameStateChoice(): void {
     if (appStore.gameStarted) {
         menuStore.setCurrentPage(PageType.GAME);
     }

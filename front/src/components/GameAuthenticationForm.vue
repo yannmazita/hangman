@@ -70,7 +70,7 @@ const onSubmit = handleSubmit(async (values, { resetForm }) => {
     return response;
 });
 
-const goToSelectScreen = function () {
+function goToSelectScreen() {
     menuStore.setCurrentPage(PageType.SELECT_SCREEN);
 };
 

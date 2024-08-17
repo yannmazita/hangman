@@ -27,12 +27,12 @@ const appStore = useAppStore();
 const menuStore = useMenuStore();
 const playername = ref('');
 
-const goToSelectScreen = function () {
+function goToSelectScreen(): void {
     //appStore.gamePaused = true;
     menuStore.setCurrentPage(PageType.SELECT_SCREEN);
 };
 
-async function submitForm() {
+async function submitForm(): Promise<void> {
     appStore.createPlayer(playername.value);
 }
 </script>
