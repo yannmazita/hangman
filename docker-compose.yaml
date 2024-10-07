@@ -1,6 +1,5 @@
 x-postgres-base: &postgres-base
   image: postgres:16.3-alpine
-  restart: always
   healthcheck:
     test:
       - CMD-SHELL
@@ -12,10 +11,8 @@ x-postgres-base: &postgres-base
 x-backend-base: &backend-base
   build:
     context: ./app
-  restart: always
 
 x-frontend-base: &frontend-base
-  restart: always
 
 services:
   postgres-dev:
